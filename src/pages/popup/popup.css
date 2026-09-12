@@ -164,6 +164,11 @@ body {
   color: var(--muted);
 }
 
+.due__done {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .button {
   margin-left: auto;
   padding: 5px 12px;

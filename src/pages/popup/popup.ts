@@ -8,6 +8,7 @@
 import { setToolbarState } from '../../lib/toolbar'
 import { send, type Request } from '../../lib/messages'
 import { siteTarget, type SiteTarget } from '../../lib/origin'
+import { todayStats } from '../../lib/store/stats'
 
 /** TODO: replace with the real donation link before the first AMO submission. */
 const SUPPORT_URL = 'https://ko-fi.com/'
@@ -183,6 +184,9 @@ async function stopRunningScripts(pattern: string, tabId: number): Promise<void>
 async function showDueCount(): Promise<void> {
   const response = await send<{ due: number }>({ type: 'due-count' })
   el('due-count').textContent = String(response.ok ? response.data.due : 0)
+
+  const done = await todayStats()
+  el('done-today').textContent = done.reviewed > 0 ? `${done.reviewed} done today` : ''
 }
 
 async function init(): Promise<void> {
@@ -192,6 +196,10 @@ async function init(): Promise<void> {
   el<HTMLAnchorElement>('support').addEventListener('click', (event) => {
     event.preventDefault()
     void browser.tabs.create({ url: SUPPORT_URL })
+  })
+
+  el('review').addEventListener('click', () => {
+    void browser.tabs.create({ url: browser.runtime.getURL('review.html') })
   })
 
   el<HTMLAnchorElement>('cards').addEventListener('click', (event) => {

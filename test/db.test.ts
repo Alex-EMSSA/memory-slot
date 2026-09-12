@@ -60,7 +60,15 @@ describe('saveCard', () => {
     const db = await freshDb()
     const { card } = await db.saveCard(WORD, 1000)
 
-    expect(card.srs).toEqual({ state: 'new', ease: 2.5, interval: 0, due: 1000, reps: 0, lapses: 0 })
+    expect(card.srs).toEqual({
+      state: 'new',
+      ease: 2.5,
+      interval: 0,
+      due: 1000,
+      reps: 0,
+      lapses: 0,
+      step: 0,
+    })
   })
 
   it('survives being read back, which is the whole point of a deck', async () => {

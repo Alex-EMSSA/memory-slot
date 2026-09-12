@@ -1,0 +1,190 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --accent: #4f46e5;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1b22;
+    --fg: #f2f2f4;
+    --muted: #9ca3af;
+    --line: #34343d;
+    --accent: #7c74f0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  font:
+    15px/1.5 system-ui,
+    -apple-system,
+    Segoe UI,
+    sans-serif;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.bar__left {
+  flex: 1;
+}
+
+.bar__link {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.bar__link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 40px;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+}
+
+.card__front {
+  margin: 0 0 16px;
+  font-size: 30px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.card__back {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.card__translation {
+  margin: 0 0 10px;
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.card__context {
+  margin: 0 auto 8px;
+  max-width: 460px;
+  color: var(--muted);
+  font-size: 14px;
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.card__source {
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.card__source:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.prompt {
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.grades {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 88px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.grade:hover {
+  border-color: var(--accent);
+}
+
+.grade:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.grade__key {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.grade__name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.grade__when {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.done {
+  text-align: center;
+}
+
+.done__title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.done__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .grades {
+    flex-wrap: wrap;
+  }
+
+  .grade {
+    min-width: 72px;
+  }
+}

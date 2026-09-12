@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Memory Slot — Review</title>
+    <link rel="stylesheet" href="review.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <span class="bar__left" id="progress"></span>
+      <a class="bar__link" href="#" id="cards">Cards</a>
+    </header>
+
+    <main class="stage" id="stage">
+      <section class="card" id="card" hidden>
+        <p class="card__front" id="front"></p>
+
+        <div class="card__back" id="back" hidden>
+          <p class="card__translation" id="translation"></p>
+          <p class="card__context" id="context" hidden></p>
+          <a class="card__source" id="source" hidden target="_blank" rel="noreferrer"></a>
+        </div>
+
+        <p class="prompt" id="prompt">Try to recall it, then press Space.</p>
+
+        <div class="grades" id="grades" hidden>
+          <button class="grade" data-grade="again" type="button">
+            <span class="grade__key">1</span>
+            <span class="grade__name">Again</span>
+            <span class="grade__when" data-when="again"></span>
+          </button>
+          <button class="grade" data-grade="hard" type="button">
+            <span class="grade__key">2</span>
+            <span class="grade__name">Hard</span>
+            <span class="grade__when" data-when="hard"></span>
+          </button>
+          <button class="grade" data-grade="good" type="button">
+            <span class="grade__key">3</span>
+            <span class="grade__name">Good</span>
+            <span class="grade__when" data-when="good"></span>
+          </button>
+          <button class="grade" data-grade="easy" type="button">
+            <span class="grade__key">4</span>
+            <span class="grade__name">Easy</span>
+            <span class="grade__when" data-when="easy"></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="done" id="done" hidden>
+        <p class="done__title" id="done-title">Nothing due right now.</p>
+        <p class="done__note" id="done-note"></p>
+      </section>
+    </main>
+
+    <script src="review.js"></script>
+  </body>
+</html>

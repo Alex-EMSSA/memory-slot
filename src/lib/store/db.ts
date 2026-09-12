@@ -18,11 +18,13 @@ export type SrsState = 'new' | 'learning' | 'review' | 'relearning'
 export type Srs = {
   state: SrsState
   ease: number
-  /** Days until the next review. */
+  /** Days until the next review. Zero while the card is still in learning steps. */
   interval: number
   due: number
   reps: number
   lapses: number
+  /** Which learning step the card is on. Absent on cards saved before M8; treat as zero. */
+  step?: number
 }
 
 export type Card = {
@@ -57,7 +59,7 @@ export type NewCard = {
 
 /** A card is new until the first review, so it is due immediately. M8 takes it from here. */
 export function newSrs(now = Date.now()): Srs {
-  return { state: 'new', ease: 2.5, interval: 0, due: now, reps: 0, lapses: 0 }
+  return { state: 'new', ease: 2.5, interval: 0, due: now, reps: 0, lapses: 0, step: 0 }
 }
 
 /** Case and spacing must not be the difference between a repeat and a duplicate. */
@@ -217,4 +219,19 @@ export async function importCards(incoming: Card[]): Promise<ImportResult> {
 export async function countDue(at = Date.now()): Promise<number> {
   const cards = await store('readonly')
   return wrap(cards.index('due').count(IDBKeyRange.upperBound(at)))
+}
+
+/** Cards whose time has come, soonest first. The review session works through this list. */
+export async function dueCards(at = Date.now(), limit = 500): Promise<Card[]> {
+  const cards = await store('readonly')
+  const found = await wrap<Card[]>(cards.index('due').getAll(IDBKeyRange.upperBound(at), limit))
+  return found.sort((a, b) => a.srs.due - b.srs.due)
+}
+
+/** Saves the schedule after an answer. The rest of the card is untouched. */
+export async function updateSrs(id: string, srs: Srs): Promise<void> {
+  const cards = await store('readwrite')
+  const card = await wrap<Card | undefined>(cards.get(id))
+  if (!card) return
+  await wrap(cards.put({ ...card, srs }))
 }

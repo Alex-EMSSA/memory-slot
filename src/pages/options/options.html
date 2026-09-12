@@ -32,6 +32,35 @@
       </section>
 
       <section class="group">
+        <h2 class="group__title">Review</h2>
+
+        <label class="row" for="new-per-day">
+          <span class="row__label">
+            New words per day
+            <span class="row__note">
+              A ceiling, not a target. It exists so a month away does not greet you with
+              four hundred cards.
+            </span>
+          </span>
+          <input class="control control--number" id="new-per-day" type="number" min="0" max="999" />
+        </label>
+
+        <label class="row" for="reviews-per-day">
+          <span class="row__label">
+            Reviews per day
+            <span class="row__note">Cards you have seen before, waiting to come round again.</span>
+          </span>
+          <input
+            class="control control--number"
+            id="reviews-per-day"
+            type="number"
+            min="0"
+            max="9999"
+          />
+        </label>
+      </section>
+
+      <section class="group">
         <h2 class="group__title">Appearance</h2>
 
         <div class="row">

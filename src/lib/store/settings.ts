@@ -15,6 +15,12 @@ export type Settings = {
    * The text colour is derived from it, never chosen separately.
    */
   tooltipColour: string
+  /**
+   * Daily ceilings. They exist so that a month away does not greet the reader with four
+   * hundred cards and end the habit on the spot.
+   */
+  newPerDay: number
+  reviewsPerDay: number
 }
 
 const STORAGE_KEY = 'settings.v1'
@@ -32,7 +38,14 @@ function defaultTargetLang(): string {
 }
 
 export function defaultSettings(): Settings {
-  return { targetLang: defaultTargetLang(), sourceLang: 'auto', apiKey: '', tooltipColour: '' }
+  return {
+    targetLang: defaultTargetLang(),
+    sourceLang: 'auto',
+    apiKey: '',
+    tooltipColour: '',
+    newPerDay: 20,
+    reviewsPerDay: 200,
+  }
 }
 
 /** Storage key, exported so listeners can tell our changes from anyone else's. */

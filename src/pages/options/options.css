@@ -100,6 +100,10 @@ body {
   outline-offset: 1px;
 }
 
+.control--number {
+  min-width: 90px;
+}
+
 .colour {
   display: flex;
   flex: none;

@@ -29,6 +29,8 @@ const STATIC_ASSETS = [
   ['src/pages/options/options.css', 'options.css'],
   ['src/pages/manager/manager.html', 'manager.html'],
   ['src/pages/manager/manager.css', 'manager.css'],
+  ['src/pages/review/review.html', 'review.html'],
+  ['src/pages/review/review.css', 'review.css'],
 ]
 
 async function copyStatic() {
@@ -56,6 +58,7 @@ const ctx = await context({
     content: 'src/content/index.ts',
     manager: 'src/pages/manager/manager.ts',
     options: 'src/pages/options/options.ts',
+    review: 'src/pages/review/review.ts',
     popup: 'src/pages/popup/popup.ts',
   },
   outdir,

@@ -36,6 +36,14 @@ function fillLanguages(select: HTMLSelectElement, withAuto: boolean): void {
   }
 }
 
+/** An empty or nonsensical box must not silently become zero cards a day. */
+function count(input: HTMLInputElement, fallback: number): number {
+  const value = Number(input.value)
+  const clean = Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback
+  input.value = String(clean)
+  return clean
+}
+
 let savedTimer: number | undefined
 
 function flashSaved(): void {
@@ -96,6 +104,17 @@ async function init(): Promise<void> {
     targetLang.append(custom)
     targetLang.value = settings.targetLang
   }
+
+  const newPerDay = el<HTMLInputElement>('new-per-day')
+  const reviewsPerDay = el<HTMLInputElement>('reviews-per-day')
+  newPerDay.value = String(settings.newPerDay)
+  reviewsPerDay.value = String(settings.reviewsPerDay)
+
+  newPerDay.addEventListener('change', () => void save({ newPerDay: count(newPerDay, 20) }))
+  reviewsPerDay.addEventListener(
+    'change',
+    () => void save({ reviewsPerDay: count(reviewsPerDay, 200) }),
+  )
 
   targetLang.addEventListener('change', () => void save({ targetLang: targetLang.value }))
   sourceLang.addEventListener('change', () => void save({ sourceLang: sourceLang.value }))
