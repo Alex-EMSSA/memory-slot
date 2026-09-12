@@ -2,6 +2,7 @@
  * What starts a translation: a double click on a word, or a phrase selected with the mouse.
  * Nothing else — no hover, no hotkey, no intermediate button to click.
  */
+import { blockTextAround, sentenceAround } from './context'
 import { MAX_TRANSLATION_LENGTH } from '../lib/limits'
 
 export type Trigger = {
@@ -13,6 +14,8 @@ export type Trigger = {
    * is indistinguishable from a broken extension.
    */
   tooLong: boolean
+  /** The sentence the selection sits in, when there is one worth keeping. */
+  context?: string
 }
 
 /**
@@ -62,7 +65,10 @@ export function readSelection(): Trigger | null {
   const rect = selection.getRangeAt(0).getBoundingClientRect()
   if (rect.width === 0 && rect.height === 0) return null
 
-  return { text: text.trim(), rect, tooLong: isTooLong(text) }
+  const trimmed = text.trim()
+  const context = sentenceAround(blockTextAround(selection.anchorNode), trimmed)
+
+  return { text: trimmed, rect, tooLong: isTooLong(text), ...(context ? { context } : {}) }
 }
 
 /**

@@ -9,6 +9,7 @@
 import { ok, send, type ErrorCode, type Request, type Response } from '../lib/messages'
 import { MAX_TRANSLATION_LENGTH } from '../lib/limits'
 import { getSettings, SETTINGS_KEY } from '../lib/store/settings'
+import { Panel } from './panel'
 import { contains } from './placement'
 import { Tooltip } from './tooltip'
 import { startTrigger, type Trigger } from './trigger'
@@ -32,6 +33,9 @@ const HOVER_SLACK = 12
 const GRACE_MS = 1200
 
 const tooltip = new Tooltip()
+
+/** Only the top frame owns a window: one card per tab, not one per advertisement iframe. */
+const panel = window.top === window ? new Panel() : null
 
 /** Bumped on every gesture so a slow answer for an old word cannot overwrite a new one. */
 let generation = 0
@@ -113,11 +117,20 @@ async function onTrigger(trigger: Trigger): Promise<void> {
   waiting = false
   shownAt = Date.now()
 
-  if (response.ok) {
-    tooltip.showResult(trigger.rect, response.data.text)
-  } else {
+  if (!response.ok) {
     tooltip.showError(trigger.rect, ERROR_MESSAGES[response.error])
+    return
   }
+
+  tooltip.showResult(trigger.rect, response.data.text)
+
+  panel?.show({
+    original: trigger.text,
+    translation: response.data.text,
+    from: response.data.from,
+    to: response.data.to,
+    ...(trigger.context ? { context: trigger.context } : {}),
+  })
 }
 
 /** Moving onto other text is the dismissal gesture: nothing has to be clicked. */
@@ -173,6 +186,7 @@ function stop(): void {
 
   cancelHide()
   tooltip.destroy()
+  panel?.destroy()
   globalThis.__memorySlotLoaded = undefined
   console.info('[memory-slot] stopped on', location.origin)
 }
@@ -183,13 +197,19 @@ function onStorageChanged(changes: Record<string, browser.storage.StorageChange>
   if (!change) return
   const next = change.newValue as { tooltipColour?: string } | undefined
   tooltip.setColour(next?.tooltipColour ?? '')
+  panel?.setColour(next?.tooltipColour ?? '')
 }
 
 function start(): void {
   browser.runtime.onMessage.addListener(onMessage)
   browser.storage.local.onChanged.addListener(onStorageChanged)
 
-  void getSettings().then((settings) => tooltip.setColour(settings.tooltipColour))
+  void getSettings().then((settings) => {
+    tooltip.setColour(settings.tooltipColour)
+    panel?.setColour(settings.tooltipColour)
+  })
+
+  void panel?.init()
 
   stopTrigger = startTrigger((trigger) => void onTrigger(trigger))
 

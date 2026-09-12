@@ -47,3 +47,29 @@ export function contains(box: Box, x: number, y: number, slack = 0): boolean {
     y <= box.top + box.height + slack
   )
 }
+
+/**
+ * Keeps the floating window inside the viewport.
+ *
+ * Called both while dragging and when the browser window is resized: a window dragged to the
+ * right edge of a wide screen must not be stranded outside a narrow one.
+ */
+export function clampToViewport(
+  x: number,
+  y: number,
+  size: Viewport,
+  viewport: Viewport,
+  margin = 8,
+): { x: number; y: number } {
+  const maxX = Math.max(margin, viewport.width - size.width - margin)
+  const maxY = Math.max(margin, viewport.height - size.height - margin)
+  return { x: clamp(x, margin, maxX), y: clamp(y, margin, maxY) }
+}
+
+/** Where the window sits before the user has ever moved it: the top right corner. */
+export function defaultPanelPosition(size: Viewport, viewport: Viewport, margin = 16): {
+  x: number
+  y: number
+} {
+  return clampToViewport(viewport.width - size.width - margin, margin, size, viewport, margin)
+}
