@@ -1,0 +1,242 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --accent: #4f46e5;
+  --danger: #b3261e;
+  --row: rgb(0 0 0 / 0.02);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1b22;
+    --fg: #f2f2f4;
+    --muted: #9ca3af;
+    --line: #34343d;
+    --accent: #7c74f0;
+    --danger: #f2b8b5;
+    --row: rgb(255 255 255 / 0.03);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px 20px 60px;
+  background: var(--bg);
+  color: var(--fg);
+  font:
+    14px/1.5 system-ui,
+    -apple-system,
+    Segoe UI,
+    sans-serif;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bar__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.bar__count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.bar__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.search {
+  flex: 1 1 240px;
+  min-width: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+.search:focus-visible,
+.button:focus-visible,
+.cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.button {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.button--danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.hidden-file {
+  display: none;
+}
+
+.status {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.status__undo {
+  margin-left: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bulk {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cards {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cards th {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.cards td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.cards tbody tr:nth-child(even) {
+  background: var(--row);
+}
+
+.cards__pick {
+  width: 34px;
+}
+
+.cards__meta {
+  width: 120px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Editing happens in place: a separate edit screen for two fields is ceremony. */
+.cell {
+  width: 100%;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.cell:hover {
+  border-color: var(--line);
+}
+
+.cell--front {
+  font-weight: 600;
+}
+
+.context {
+  margin-top: 2px;
+  padding-left: 6px;
+  border-left: 2px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.source {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.source:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.rowbutton {
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rowbutton:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.empty {
+  margin-top: 32px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -109,6 +109,11 @@ async function init(): Promise<void> {
     void save({ tooltipColour: '' })
   })
 
+  el<HTMLAnchorElement>('cards').addEventListener('click', (event) => {
+    event.preventDefault()
+    void browser.tabs.create({ url: browser.runtime.getURL('manager.html') })
+  })
+
   el<HTMLAnchorElement>('support').addEventListener('click', (event) => {
     event.preventDefault()
     void browser.tabs.create({ url: SUPPORT_URL })

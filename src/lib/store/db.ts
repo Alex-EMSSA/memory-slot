@@ -194,6 +194,26 @@ export async function countCards(): Promise<number> {
   return wrap(cards.count())
 }
 
+export type ImportResult = { added: number; replaced: number }
+
+/**
+ * Restores a backup. A word already in the deck is replaced rather than duplicated, and the
+ * incoming schedule wins: the file is the newer truth, otherwise there was no point restoring.
+ */
+export async function importCards(incoming: Card[]): Promise<ImportResult> {
+  const result: ImportResult = { added: 0, replaced: 0 }
+
+  for (const card of incoming) {
+    const existing = await findByLookup(card.front, card.langTo)
+    const cards = await store('readwrite')
+    await wrap(cards.put(existing ? { ...card, id: existing.id } : card))
+    if (existing) result.replaced += 1
+    else result.added += 1
+  }
+
+  return result
+}
+
 export async function countDue(at = Date.now()): Promise<number> {
   const cards = await store('readonly')
   return wrap(cards.index('due').count(IDBKeyRange.upperBound(at)))

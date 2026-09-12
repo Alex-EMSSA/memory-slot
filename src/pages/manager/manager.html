@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Memory Slot — Cards</title>
+    <link rel="stylesheet" href="manager.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <h1 class="bar__title">Cards</h1>
+      <span class="bar__count" id="count"></span>
+
+      <input
+        class="search"
+        id="search"
+        type="search"
+        placeholder="Search words, translations, context"
+        aria-label="Search cards"
+      />
+
+      <div class="bar__actions">
+        <button class="button" id="export-json" type="button">Export backup</button>
+        <button class="button" id="export-csv" type="button">Export for Anki</button>
+        <button class="button" id="import" type="button">Import backup</button>
+        <input class="hidden-file" id="import-file" type="file" accept="application/json,.json" />
+      </div>
+    </header>
+
+    <p class="status" id="status" hidden></p>
+
+    <section class="bulk" id="bulk" hidden>
+      <span id="bulk-count"></span>
+      <button class="button button--danger" id="delete-selected" type="button">Delete</button>
+    </section>
+
+    <table class="cards">
+      <thead>
+        <tr>
+          <th class="cards__pick">
+            <input type="checkbox" id="pick-all" aria-label="Select all cards" />
+          </th>
+          <th>Word</th>
+          <th>Translation</th>
+          <th class="cards__meta">Languages</th>
+          <th class="cards__meta">Added</th>
+          <th class="cards__pick"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <p class="empty" id="empty" hidden>
+      No cards yet. Double-click a word on a page you have enabled, then press
+      <strong>Add to deck</strong>.
+    </p>
+
+    <script src="manager.js"></script>
+  </body>
+</html>

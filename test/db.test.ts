@@ -137,6 +137,51 @@ describe('restoreCard', () => {
   })
 })
 
+describe('importCards', () => {
+  /**
+   * The acceptance test for the whole backup story: export, wipe, import, and the deck is
+   * back — including the review schedule, which is the part a learner cannot recreate.
+   */
+  it('restores a deck into an empty database, schedule intact', async () => {
+    const first = await freshDb()
+    const { card } = await first.saveCard(WORD, 1000)
+    const reviewed = { ...card, srs: { ...card.srs, state: 'review' as const, reps: 7, due: 5000 } }
+    await first.restoreCard(reviewed.id, reviewed)
+
+    const exported = JSON.parse(JSON.stringify(await first.allCards()))
+
+    const second = await freshDb()
+    expect(await second.countCards()).toBe(0)
+
+    const result = await second.importCards(exported)
+    expect(result).toEqual({ added: 1, replaced: 0 })
+
+    const restored = (await second.allCards())[0]!
+    expect(restored).toEqual(reviewed)
+  })
+
+  it('replaces a word already in the deck rather than duplicating it', async () => {
+    const db = await freshDb()
+    const { card } = await db.saveCard(WORD, 1000)
+
+    const incoming = { ...card, id: 'from-another-machine', back: 'світлий' }
+    const result = await db.importCards([incoming])
+
+    expect(result).toEqual({ added: 0, replaced: 1 })
+    expect(await db.countCards()).toBe(1)
+
+    const stored = (await db.allCards())[0]!
+    expect(stored.back).toBe('світлий')
+    // The local id wins, so anything already pointing at this card still finds it.
+    expect(stored.id).toBe(card.id)
+  })
+
+  it('imports nothing from an empty file without complaint', async () => {
+    const db = await freshDb()
+    expect(await db.importCards([])).toEqual({ added: 0, replaced: 0 })
+  })
+})
+
 describe('countDue', () => {
   it('counts cards whose time has come and no others', async () => {
     const db = await freshDb()
