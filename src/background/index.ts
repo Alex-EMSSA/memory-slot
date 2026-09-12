@@ -4,10 +4,12 @@
  * This is the only context allowed to make network requests: a fetch from a content
  * script would hit the page's CSP and CORS rules, which differ from site to site.
  *
- * M1 adds the translation orchestrator, M2 adds per-site enabling. For now this is the
- * message router and nothing else.
+ * M2 adds per-site enabling.
  */
-import { fail, type Request, type Response } from '../lib/messages'
+import { flushCache } from '../lib/cache'
+import { fail, ok, type Request, type Response } from '../lib/messages'
+import { asProviderError } from '../lib/providers/types'
+import { translate } from './translate'
 
 const VERSION = browser.runtime.getManifest().version
 
@@ -22,10 +24,10 @@ browser.runtime.onInstalled.addListener((details) => {
 
 browser.runtime.onMessage.addListener((message: unknown): Promise<Response> => {
   const request = message as Request
-  console.debug('[memory-slot] request', request?.type)
 
   switch (request?.type) {
     case 'translate':
+      return handleTranslate(request)
     case 'site-status':
     case 'site-toggle':
       return Promise.resolve(fail('not-implemented'))
@@ -33,3 +35,24 @@ browser.runtime.onMessage.addListener((message: unknown): Promise<Response> => {
       return Promise.resolve(fail('bad-request'))
   }
 })
+
+async function handleTranslate(request: Extract<Request, { type: 'translate' }>): Promise<Response> {
+  try {
+    return ok(await translate(request))
+  } catch (error) {
+    const failure = asProviderError(error)
+    console.warn('[memory-slot] translation failed:', failure.code, failure.message)
+    return fail(failure.code)
+  }
+}
+
+// The event page is unloaded when idle; pending cache writes must not go with it.
+browser.runtime.onSuspend.addListener(() => {
+  void flushCache()
+})
+
+/**
+ * Console handle for manual checks from about:debugging:
+ *   await memorySlot.translate({ text: 'hello', from: 'auto', to: 'uk' })
+ */
+Object.assign(globalThis, { memorySlot: { translate, flushCache } })

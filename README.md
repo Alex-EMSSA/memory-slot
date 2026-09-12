@@ -31,7 +31,8 @@ Other scripts:
 | `npm start` | launch Firefox against an existing `dist/` |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint plus `web-ext lint` on the build |
-| `npm test` | vitest |
+| `npm test` | vitest, offline only |
+| `npm run test:live` | hits Google for real; run it when you suspect the endpoint changed |
 | `npm run package` | zip for AMO in `web-ext-artifacts/` |
 
 `src/` is never loaded directly — Firefox always runs the build in `dist/`.
@@ -57,6 +58,11 @@ build.mjs       esbuild bundle + static asset copy
   a separate source-code submission.
 - All network requests live in the background page. A `fetch` from a content script hits the
   page's CSP and CORS rules, which differ from site to site.
+- The free `translate_a/single` endpoint is undocumented and unversioned, so its parser is
+  isolated in one file behind fixture tests. When Google changes the format, `npm run test:live`
+  fails first and only that file needs fixing.
+- A 429 is never retried. When Google is already refusing traffic, retrying is how a throttle
+  turns into a block.
 - Interface language is English only.
 
 ## Licence

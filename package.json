@@ -19,6 +19,7 @@
     "lint": "npm run lint:code && npm run lint:ext",
     "format": "prettier --write .",
     "test": "vitest run",
+    "test:live": "vitest run --config vitest.live.config.ts",
     "package": "npm run build && web-ext build --source-dir dist --overwrite-dest"
   },
   "devDependencies": {

@@ -4,7 +4,8 @@ import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'web-ext-artifacts/**', 'node_modules/**'] },
+  // .web-ext-profile is a Firefox profile, not our source.
+  { ignores: ['dist/**', 'web-ext-artifacts/**', 'node_modules/**', '.web-ext-profile/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -17,11 +18,16 @@ export default tseslint.config(
     },
     rules: {
       'no-console': ['warn', { allow: ['info', 'warn', 'error', 'debug'] }],
+    },
+  },
+  {
+    rules: {
+      // A leading underscore marks an argument kept for its position, not its value.
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
   {
-    files: ['build.mjs', 'test/**/*.ts', '*.config.mjs'],
+    files: ['*.mjs', 'test/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
   {
