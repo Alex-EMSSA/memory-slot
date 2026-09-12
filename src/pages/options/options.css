@@ -60,6 +60,41 @@ body {
   color: var(--muted);
 }
 
+.group__note {
+  margin: 10px 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sites {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.site:last-child {
+  border-bottom: none;
+}
+
+.site__host {
+  overflow-wrap: anywhere;
+}
+
+.sites__empty {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .row {
   display: flex;
   align-items: flex-start;

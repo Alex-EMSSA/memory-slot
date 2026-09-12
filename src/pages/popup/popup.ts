@@ -8,6 +8,7 @@
 import { setToolbarState } from '../../lib/toolbar'
 import { send, type Request } from '../../lib/messages'
 import { siteTarget, type SiteTarget } from '../../lib/origin'
+import { disableSite } from '../../lib/sites'
 import { todayStats } from '../../lib/store/stats'
 
 /** TODO: replace with the real donation link before the first AMO submission. */
@@ -148,36 +149,14 @@ async function enable(target: SiteTarget, tabId: number): Promise<void> {
 }
 
 async function disable(target: SiteTarget, tabId: number): Promise<void> {
-  // Order matters: the running scripts are told to stop while we still hold the permission
-  // that lets us reach their tabs.
-  await stopRunningScripts(target.pattern, tabId)
-  await browser.permissions.remove({ origins: [target.pattern] })
+  // Order matters inside disableSite: the running scripts are told to stop while we still
+  // hold the permission that lets us reach their tabs.
+  await disableSite(target.pattern, tabId)
   await setToolbarState(tabId, false)
 
   lastInjection = 'not attempted'
   await refresh()
   el('hint').textContent = `Off for ${target.host}. Nothing on this site is read any more.`
-}
-
-async function stopRunningScripts(pattern: string, tabId: number): Promise<void> {
-  const targets = new Set<number>([tabId])
-
-  try {
-    for (const tab of await browser.tabs.query({ url: pattern })) {
-      if (tab.id !== undefined) targets.add(tab.id)
-    }
-  } catch {
-    // Without the URL filter we can still reach the tab the user is looking at.
-  }
-
-  const stop: Request = { type: 'content-stop' }
-  await Promise.all(
-    [...targets].map((id) =>
-      browser.tabs.sendMessage(id, stop).catch(() => {
-        // No script in that tab, or it never loaded. Nothing to stop.
-      }),
-    ),
-  )
 }
 
 /** The count in the popup has to be the real one; a hard-coded zero is a lie with a number on it. */

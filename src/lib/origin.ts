@@ -41,6 +41,11 @@ export const API_ORIGINS: readonly string[] = [
   'https://api.mymemory.translated.net/*',
 ]
 
+/** Turns 'https://example.com/*' back into 'example.com' for display. */
+export function hostFromPattern(pattern: string): string {
+  return pattern.replace(/^[a-z]+:\/\//i, '').replace(/\/\*$/, '')
+}
+
 export function isApiOrigin(pattern: string): boolean {
   return API_ORIGINS.includes(pattern)
 }

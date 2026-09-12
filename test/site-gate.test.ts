@@ -10,23 +10,9 @@ async function loadGate(origins: string[] = []) {
   return { ...module, stub }
 }
 
+// Reading the permission list itself is covered in sites.test.ts; this file is about
+// keeping the content script registration in step with it.
 describe('site gate', () => {
-  it('does not count our own API hosts as enabled sites', async () => {
-    const gate = await loadGate()
-    expect(await gate.enabledSites()).toEqual([])
-  })
-
-  it('lists granted sites', async () => {
-    const gate = await loadGate(['https://example.com/*', 'https://a.org/*'])
-    expect(await gate.enabledSites()).toEqual(['https://a.org/*', 'https://example.com/*'])
-  })
-
-  it('reports whether one site is enabled', async () => {
-    const gate = await loadGate(['https://example.com/*'])
-    expect(await gate.isEnabled('https://example.com/*')).toBe(true)
-    expect(await gate.isEnabled('https://other.com/*')).toBe(false)
-  })
-
   /**
    * The point of the whole design: with nothing enabled there must be no registration,
    * so no content script can run anywhere.

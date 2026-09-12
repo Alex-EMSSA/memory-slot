@@ -9,20 +9,10 @@
  * The source of truth is the permission itself, never a list in storage: a user can revoke
  * access from about:addons without ever opening our UI.
  */
-import { isApiOrigin } from '../lib/origin'
+import { enabledSites } from '../lib/sites'
 
 const CONTENT_SCRIPT_ID = 'memory-slot-content'
 const CONTENT_SCRIPT_FILE = 'content.js'
-
-/** Granted origins that are actual sites, i.e. everything except our own API hosts. */
-export async function enabledSites(): Promise<string[]> {
-  const granted = await browser.permissions.getAll()
-  return (granted.origins ?? []).filter((pattern) => !isApiOrigin(pattern)).sort()
-}
-
-export async function isEnabled(pattern: string): Promise<boolean> {
-  return browser.permissions.contains({ origins: [pattern] })
-}
 
 /**
  * Brings the registration in line with the granted permissions. Safe to call at any time

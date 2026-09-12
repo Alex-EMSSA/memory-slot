@@ -10,7 +10,8 @@ import { asProviderError } from '../lib/providers/types'
 import { allCards, countCards, countDue, restoreCard, saveCard, type Card } from '../lib/store/db'
 import { getSettings, patchSettings } from '../lib/store/settings'
 import { setToolbarState } from '../lib/toolbar'
-import { enabledSites, syncRegistrations } from './site-gate'
+import { enabledSites } from '../lib/sites'
+import { syncRegistrations } from './site-gate'
 import { translate } from './translate'
 
 const VERSION = browser.runtime.getManifest().version

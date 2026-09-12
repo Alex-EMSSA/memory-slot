@@ -6,6 +6,8 @@
  */
 import { readableTextColour } from '../../lib/colour'
 import { LANGUAGES } from '../../lib/langs'
+import { hostFromPattern } from '../../lib/origin'
+import { disableSite, enabledSites } from '../../lib/sites'
 import { getSettings, patchSettings, type Settings } from '../../lib/store/settings'
 
 /** TODO: replace with the real donation link before the first AMO submission. */
@@ -42,6 +44,40 @@ function count(input: HTMLInputElement, fallback: number): number {
   const clean = Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback
   input.value = String(clean)
   return clean
+}
+
+/**
+ * Listed from the permissions themselves rather than from a list we keep: a reader can revoke
+ * a site in about:addons, and a remembered list would then show sites that are already off.
+ */
+async function renderSites(): Promise<void> {
+  const list = el('sites')
+  const sites = await enabledSites()
+
+  el('sites-empty').hidden = sites.length > 0
+  list.replaceChildren(...sites.map(renderSite))
+}
+
+function renderSite(pattern: string): HTMLLIElement {
+  const item = document.createElement('li')
+  item.className = 'site'
+
+  const host = document.createElement('span')
+  host.className = 'site__host'
+  host.textContent = hostFromPattern(pattern)
+
+  const off = document.createElement('button')
+  off.className = 'button'
+  off.type = 'button'
+  off.textContent = 'Switch off'
+  off.setAttribute('aria-label', `Switch off ${hostFromPattern(pattern)}`)
+  off.addEventListener('click', () => {
+    off.disabled = true
+    void disableSite(pattern).then(renderSites)
+  })
+
+  item.append(host, off)
+  return item
 }
 
 let savedTimer: number | undefined
@@ -127,6 +163,11 @@ async function init(): Promise<void> {
     renderPreview('')
     void save({ tooltipColour: '' })
   })
+
+  await renderSites()
+  // The list must follow the toolbar switch, not just this page's own buttons.
+  browser.permissions.onAdded.addListener(() => void renderSites())
+  browser.permissions.onRemoved.addListener(() => void renderSites())
 
   el<HTMLAnchorElement>('cards').addEventListener('click', (event) => {
     event.preventDefault()
