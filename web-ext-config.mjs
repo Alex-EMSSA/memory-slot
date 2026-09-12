@@ -11,12 +11,17 @@ const profileDir = fileURLToPath(new URL('.web-ext-profile', import.meta.url))
 export default {
   sourceDir: 'dist',
   run: {
-    // A plain article page is the fastest way to eyeball the extension after a rebuild.
-    startUrl: ['https://en.wikipedia.org/wiki/Firefox'],
+    // Override to land on the site you are debugging: MS_START_URL=https://example.com npm run dev
+    startUrl: [process.env.MS_START_URL ?? 'https://en.wikipedia.org/wiki/Firefox'],
     // Keep the profile between runs so enabled sites and saved cards survive a restart.
     firefoxProfile: profileDir,
     profileCreateIfMissing: true,
     keepProfileChanges: true,
+    /**
+     * Mirror console output from the extension (chrome) and from content scripts (content)
+     * onto stdout, so a dev run shows what the extension is doing without opening DevTools.
+     */
+    pref: ['devtools.console.stdout.chrome=true', 'devtools.console.stdout.content=true'],
   },
   build: {
     overwriteDest: true,

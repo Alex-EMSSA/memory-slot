@@ -7,7 +7,7 @@
 import { flushCache } from '../lib/cache'
 import { fail, ok, type Request, type Response } from '../lib/messages'
 import { asProviderError } from '../lib/providers/types'
-import { ICON_OFF, ICON_ON, TITLE_OFF, TITLE_ON } from '../lib/icons'
+import { setToolbarState } from '../lib/toolbar'
 import { enabledSites, syncRegistrations } from './site-gate'
 import { translate } from './translate'
 
@@ -70,25 +70,35 @@ async function handleTranslate(request: Extract<Request, { type: 'translate' }>)
  */
 async function handleContentReady(sender: browser.runtime.MessageSender): Promise<Response> {
   const tabId = sender.tab?.id
-  if (tabId === undefined) return fail('bad-request')
+  console.info('[memory-slot] content-ready from tab', tabId)
+  if (tabId === undefined) {
+    await recordDiagnostic({ event: 'content-ready without tab id' })
+    return fail('bad-request')
+  }
 
-  await setTabIcon(tabId, true)
+  const badge = await setToolbarState(tabId, true)
+  if (badge !== 'ok') await recordDiagnostic({ event: 'toolbar-failed', tabId, reason: badge })
   return ok({ acknowledged: true })
 }
 
-async function setTabIcon(tabId: number, on: boolean): Promise<void> {
+/**
+ * Leaves a trace of what the background page actually did, readable from the popup.
+ * An event page is unloaded when idle, so its console and its memory are both unreliable
+ * places to look for what happened a minute ago.
+ */
+async function recordDiagnostic(entry: Record<string, unknown>): Promise<void> {
   try {
-    await browser.action.setIcon({ tabId, path: on ? ICON_ON : ICON_OFF })
-    await browser.action.setTitle({ tabId, title: on ? TITLE_ON : TITLE_OFF })
+    await browser.storage.local.set({ 'diag.v1': { at: new Date().toISOString(), ...entry } })
   } catch {
-    // The tab can be gone by the time we get here; nothing to recover.
+    // Diagnostics must never break the thing they are diagnosing.
   }
 }
 
 // A tab starting a new navigation is off until its content script says otherwise.
 browser.tabs.onUpdated.addListener(
   (tabId, changeInfo) => {
-    if (changeInfo.status === 'loading') void setTabIcon(tabId, false)
+    if (changeInfo.status === 'loading') void setToolbarState(tabId, false)
+
   },
   { properties: ['status'] },
 )

@@ -5,7 +5,7 @@
  * only accepts permissions.request() from a user input handler on an extension page, and
  * it must be the first thing the handler does. Anything awaited before it loses the gesture.
  */
-import { ICON_OFF, TITLE_OFF } from '../../lib/icons'
+import { setToolbarState } from '../../lib/toolbar'
 import type { Request } from '../../lib/messages'
 import { siteTarget, type SiteTarget } from '../../lib/origin'
 
@@ -14,10 +14,13 @@ const SUPPORT_URL = 'https://ko-fi.com/'
 
 const CONTENT_SCRIPT_FILE = 'content.js'
 
-type Page = { tabId: number; target: SiteTarget | null }
+type Page = { tabId: number; url: string; target: SiteTarget | null }
 
-/** Resolved once while the popup opens, so the toggle handler never has to await first. */
-let page: Page = { tabId: -1, target: null }
+/** Resolved while the popup opens, so the toggle handler never has to await first. */
+let page: Page = { tabId: -1, url: '', target: null }
+
+/** Result of the last injection attempt, shown in the diagnostics line. */
+let lastInjection = 'not attempted'
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id)
@@ -27,8 +30,18 @@ function el<T extends HTMLElement>(id: string): T {
 
 const toggle = () => el<HTMLInputElement>('site-toggle')
 
-function setHint(text: string): void {
-  el('hint').textContent = text
+function describe(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+/** Asks the page directly instead of assuming: the only honest answer about a running script. */
+async function isScriptAlive(tabId: number): Promise<boolean> {
+  try {
+    const ping: Request = { type: 'ping' }
+    return Boolean(await browser.tabs.sendMessage(tabId, ping))
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -37,15 +50,66 @@ function setHint(text: string): void {
  */
 async function currentPage(): Promise<Page> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true })
-  return { tabId: tab?.id ?? -1, target: siteTarget(tab?.url) }
+  return { tabId: tab?.id ?? -1, url: tab?.url ?? '', target: siteTarget(tab?.url) }
+}
+
+/**
+ * Only genuine failures are shown. Everything else belongs in the hint, in plain words.
+ * These strings come from the browser, so they are reported verbatim rather than guessed at.
+ */
+function showProblems(badge: string): void {
+  const problems: string[] = []
+  if (badge !== 'ok' && badge !== 'skipped') problems.push(`toolbar: ${badge}`)
+  if (lastInjection !== 'ok' && lastInjection !== 'not attempted') {
+    problems.push(`could not start on this page: ${lastInjection}`)
+  }
+
+  const node = el('diag')
+  node.textContent = problems.join(' · ')
+  node.hidden = problems.length === 0
+}
+
+/** Renders the whole popup from the real state of the page. Safe to call at any time. */
+async function refresh(): Promise<void> {
+  page = await currentPage()
+  const input = toggle()
+
+  if (!page.target) {
+    el('host').textContent = 'not a web page'
+    el('hint').textContent = 'Memory Slot works on ordinary web pages only.'
+    showProblems('skipped')
+    input.checked = false
+    input.disabled = true
+    return
+  }
+
+  el('host').textContent = page.target.host
+
+  const granted = await browser.permissions.contains({ origins: [page.target.pattern] })
+  input.checked = granted
+  input.disabled = false
+
+  const alive = granted ? await isScriptAlive(page.tabId) : false
+  const badge = granted ? await setToolbarState(page.tabId, alive) : 'skipped'
+
+  if (!granted) {
+    el('hint').textContent =
+      `Off. Memory Slot reads nothing on ${page.target.host} until you turn it on.`
+  } else if (alive) {
+    el('hint').textContent = `On for ${page.target.host}. Double-click a word to translate it.`
+  } else {
+    el('hint').textContent = `On for ${page.target.host}. Reload this page to start using it here.`
+  }
+
+  showProblems(badge)
 }
 
 async function enable(target: SiteTarget, tabId: number): Promise<void> {
   // First statement of the gesture: no await may precede it.
   const granted = await browser.permissions.request({ origins: [target.pattern] })
   if (!granted) {
-    toggle().checked = false
-    setHint('Not enabled: Firefox did not grant access to this site.')
+    lastInjection = 'permission refused'
+    await refresh()
     return
   }
 
@@ -55,12 +119,12 @@ async function enable(target: SiteTarget, tabId: number): Promise<void> {
       target: { tabId, allFrames: true },
       files: [CONTENT_SCRIPT_FILE],
     })
-  } catch {
-    setHint(`On for ${target.host}. Reload the page to start using it here.`)
-    return
+    lastInjection = 'ok'
+  } catch (error) {
+    lastInjection = describe(error)
   }
 
-  setHint(`On for ${target.host}. Double-click a word to translate it.`)
+  await refresh()
 }
 
 async function disable(target: SiteTarget, tabId: number): Promise<void> {
@@ -68,15 +132,11 @@ async function disable(target: SiteTarget, tabId: number): Promise<void> {
   // that lets us reach their tabs.
   await stopRunningScripts(target.pattern, tabId)
   await browser.permissions.remove({ origins: [target.pattern] })
+  await setToolbarState(tabId, false)
 
-  try {
-    await browser.action.setIcon({ tabId, path: ICON_OFF })
-    await browser.action.setTitle({ tabId, title: TITLE_OFF })
-  } catch {
-    // Cosmetic only.
-  }
-
-  setHint(`Off for ${target.host}. Nothing on this site is read any more.`)
+  lastInjection = 'not attempted'
+  await refresh()
+  el('hint').textContent = `Off for ${target.host}. Nothing on this site is read any more.`
 }
 
 async function stopRunningScripts(pattern: string, tabId: number): Promise<void> {
@@ -113,27 +173,8 @@ async function init(): Promise<void> {
     // M6 registers options_ui; until then there is nothing to open.
   })
 
-  page = await currentPage()
-
-  if (!page.target) {
-    el('host').textContent = 'not a web page'
-    setHint('Memory Slot works on ordinary web pages only.')
-    return
-  }
-
-  el('host').textContent = page.target.host
-
-  const enabled = await browser.permissions.contains({ origins: [page.target.pattern] })
-  const input = toggle()
-  input.checked = enabled
-  input.disabled = false
-  setHint(
-    enabled
-      ? `On for ${page.target.host}. Double-click a word to translate it.`
-      : `Off. Memory Slot reads nothing on ${page.target.host} until you turn it on.`,
-  )
-
-  input.addEventListener('change', () => {
+  toggle().addEventListener('change', () => {
+    const input = toggle()
     const { target, tabId } = page
     if (!target) return
 
@@ -141,6 +182,12 @@ async function init(): Promise<void> {
     if (input.checked) void enable(target, tabId)
     else void disable(target, tabId)
   })
+
+  await refresh()
 }
 
-void init()
+// A popup that fails silently is a popup that cannot be debugged.
+void init().catch((error: unknown) => {
+  const diag = document.getElementById('diag')
+  if (diag) diag.textContent = `popup failed: ${describe(error)}`
+})

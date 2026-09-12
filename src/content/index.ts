@@ -30,7 +30,7 @@ function onMessage(message: unknown): Promise<Response> | undefined {
 function stop(): void {
   browser.runtime.onMessage.removeListener(onMessage)
   globalThis.__memorySlotLoaded = undefined
-  console.debug('[memory-slot] stopped on', location.origin)
+  console.info('[memory-slot] stopped on', location.origin)
 }
 
 function start(): void {
@@ -43,7 +43,7 @@ function start(): void {
     })
   }
 
-  console.debug('[memory-slot] active on', location.origin)
+  console.info('[memory-slot] active on', location.origin)
 }
 
 // Toggling a site off and on re-injects the script into a page that never reloaded.
