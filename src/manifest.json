@@ -20,7 +20,7 @@
     "48": "icons/icon.svg",
     "96": "icons/icon.svg"
   },
-  "permissions": ["storage", "scripting"],
+  "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [
     "https://translate.googleapis.com/*",
     "https://translation.googleapis.com/*"

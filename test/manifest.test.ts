@@ -31,6 +31,15 @@ describe('manifest', () => {
   })
 
   /**
+   * activeTab is what lets the popup read the current tab's URL for as long as it is open.
+   * Without it we would need the far broader "tabs" permission just to name the site.
+   */
+  it('reads the current tab through activeTab rather than the tabs permission', () => {
+    expect(manifest.permissions).toContain('activeTab')
+    expect(manifest.permissions).not.toContain('tabs')
+  })
+
+  /**
    * Selected text leaves the device for Google, so this declaration must stay honest.
    * Mozilla will make the key mandatory; dropping it silently would also be a lie to users.
    */

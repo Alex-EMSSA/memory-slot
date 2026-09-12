@@ -4,12 +4,14 @@
  */
 
 export type Request =
-  /** Ask the background page for a translation. Added in M1. */
-  | { type: 'translate'; text: string; from: string; to: string }
-  /** Is the extension enabled on this origin? Added in M2. */
-  | { type: 'site-status'; origin: string }
-  /** Turn the extension on or off for an origin. Added in M2. */
-  | { type: 'site-toggle'; origin: string; enabled: boolean }
+  /** Content script or popup asks the background page for a translation. */
+  | { type: 'translate'; text: string; from?: string; to?: string }
+  /** Content script announces itself so the background can light up the toolbar icon. */
+  | { type: 'content-ready' }
+  /** Sent to a tab when its site is switched off, so the script stops without a reload. */
+  | { type: 'content-stop' }
+  /** Diagnostics: is our script alive in this tab? */
+  | { type: 'ping' }
 
 export type Response<T = unknown> = { ok: true; data: T } | { ok: false; error: ErrorCode }
 

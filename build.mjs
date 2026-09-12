@@ -48,6 +48,7 @@ await rm(outdir, { recursive: true, force: true })
 const ctx = await context({
   entryPoints: {
     background: 'src/background/index.ts',
+    content: 'src/content/index.ts',
     popup: 'src/pages/popup/popup.ts',
   },
   outdir,
