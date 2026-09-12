@@ -4,6 +4,7 @@
  */
 import { blockTextAround, sentenceAround } from './context'
 import { MAX_TRANSLATION_LENGTH } from '../lib/limits'
+import { isOurUi } from './ui-roots'
 
 export type Trigger = {
   text: string
@@ -84,13 +85,17 @@ export function startTrigger(onTrigger: (trigger: Trigger) => void): () => void 
     if (trigger) onTrigger(trigger)
   }
 
-  const onDoubleClick = (): void => {
+  const onDoubleClick = (event: MouseEvent): void => {
+    if (isOurUi(event.target)) return
     lastDoubleClickAt = Date.now()
     // Let the browser finish selecting the word under the cursor.
     setTimeout(emit, 0)
   }
 
-  const onMouseUp = (): void => {
+  const onMouseUp = (event: MouseEvent): void => {
+    // Clicking our own window is not a reading gesture. Without this, closing the window
+    // while a word is still selected re-fires the trigger and it reopens at once.
+    if (isOurUi(event.target)) return
     if (Date.now() - lastDoubleClickAt < DOUBLE_CLICK_GUARD_MS) return
     setTimeout(emit, 0)
   }

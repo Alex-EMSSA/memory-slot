@@ -8,6 +8,7 @@
  */
 import { readableTextColour } from '../lib/colour'
 import { placeTooltip, type Box } from './placement'
+import { registerUiRoot, unregisterUiRoot } from './ui-roots'
 
 const STYLES = `
 :host { all: initial; }
@@ -132,6 +133,7 @@ export class Tooltip {
   }
 
   destroy(): void {
+    if (this.host) unregisterUiRoot(this.host)
     this.host?.remove()
     this.host = null
     this.box = null
@@ -182,6 +184,7 @@ export class Tooltip {
     root.append(style, box)
 
     document.documentElement.append(host)
+    registerUiRoot(host)
 
     this.host = host
     this.box = box

@@ -11,6 +11,7 @@
  */
 import { readableTextColour } from '../lib/colour'
 import { clampToViewport, defaultPanelPosition } from './placement'
+import { registerUiRoot, unregisterUiRoot } from './ui-roots'
 import {
   defaultPanelState,
   flushPanelState,
@@ -219,6 +220,7 @@ export class Panel {
     this.observer = null
     document.removeEventListener('fullscreenchange', this.onFullscreenChange)
     window.removeEventListener('resize', this.onResize)
+    if (this.host) unregisterUiRoot(this.host)
     this.host?.remove()
     this.host = null
     this.frame = null
@@ -293,6 +295,7 @@ export class Panel {
     frame.append(head, body)
     root.append(style, frame)
     document.documentElement.append(host)
+    registerUiRoot(host)
 
     this.host = host
     this.frame = frame
