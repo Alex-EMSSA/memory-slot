@@ -34,12 +34,67 @@ Other scripts:
 | `npm test` | vitest, offline only |
 | `npm run test:live` | hits Google for real; run it when you suspect the endpoint changed |
 | `npm run package` | zip for AMO in `web-ext-artifacts/` |
+| `npm run source` | source archive for AMO review, from the committed tree |
 | `npm run sign` | signed .xpi for everyday use, see below |
 
 `src/` is never loaded directly — Firefox always runs the build in `dist/`.
 
 The dev run uses its own Firefox profile in `.web-ext-profile/` and keeps it between runs, so
 enabled sites and saved cards survive a restart. Delete the directory for a clean slate.
+
+## Build instructions for AMO reviewers
+
+The submitted package is built with [esbuild](https://esbuild.github.io/): TypeScript is
+transpiled to JavaScript and the modules are bundled into one file per entry point. Nothing is
+minified or obfuscated, so the submitted files are readable, but they are generated — these are
+the steps to reproduce them byte for byte.
+
+**Operating system**
+
+Any of Windows, macOS or Linux. Nothing in the build is platform specific: it was developed on
+Windows 11 and runs on Ubuntu in CI (`.github/workflows/ci.yml`), producing the same output.
+
+**Required software**
+
+| Program | Version | How to install |
+| --- | --- | --- |
+| Node.js | 22 LTS (any 20 or newer works) | [nodejs.org/en/download](https://nodejs.org/en/download), or `winget install OpenJS.NodeJS.LTS` on Windows, `sudo apt install nodejs npm` on Debian and Ubuntu, `brew install node` on macOS |
+| npm | ships with Node.js | — |
+
+Nothing else is needed. The build reaches the network only during `npm ci`, to fetch the
+dependencies pinned in `package-lock.json`.
+
+**Steps**
+
+```bash
+npm ci          # exact dependency versions from package-lock.json
+npm run build   # the whole build: writes the extension to dist/
+```
+
+`npm run build` is the build script referred to above; it runs `node build.mjs` and nothing
+else. There is no separate bundler config, task runner or code generation step.
+
+`dist/` is then identical to the contents of the submitted package. `build.mjs` is the whole
+build: it runs esbuild over the entry points listed there and copies the static files
+(`manifest.json`, HTML, CSS, icons, `_locales`) verbatim.
+
+**Optional checks**
+
+```bash
+npm test        # 242 unit tests, offline
+npm run lint    # ESLint plus web-ext lint on the built extension
+```
+
+**Where the shipped files come from**
+
+| Shipped file | Built from |
+| --- | --- |
+| `background.js` | `src/background/index.ts` and its imports |
+| `content.js` | `src/content/index.ts` and its imports |
+| `popup.js`, `options.js`, `manager.js`, `review.js`, `welcome.js` | the matching `src/pages/*/*.ts` |
+| everything else | copied unchanged from `src/` |
+
+`npm run source` produces the source archive from the committed tree.
 
 ## Installing it in your everyday Firefox
 
