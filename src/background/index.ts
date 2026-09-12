@@ -74,7 +74,9 @@ async function handleTranslate(request: Extract<Request, { type: 'translate' }>)
       code: failure.code,
       detail: failure.message,
     })
-    return fail(failure.code)
+    // Rate limiting carries a countdown; the canned message alone would leave the reader
+    // clicking every few seconds to find out whether it is over.
+    return fail(failure.code, failure.code === 'rate-limited' ? failure.message : undefined)
   }
 }
 

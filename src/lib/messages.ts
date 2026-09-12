@@ -28,7 +28,10 @@ export type Request =
   /** How many cards are waiting to be reviewed. */
   | { type: 'due-count' }
 
-export type Response<T = unknown> = { ok: true; data: T } | { ok: false; error: ErrorCode }
+export type Response<T = unknown> =
+  | { ok: true; data: T }
+  /** `detail` is shown to the reader when the canned message would be less useful. */
+  | { ok: false; error: ErrorCode; detail?: string }
 
 export type ErrorCode =
   | 'not-implemented'
@@ -42,8 +45,8 @@ export function ok<T>(data: T): Response<T> {
   return { ok: true, data }
 }
 
-export function fail(error: ErrorCode): Response<never> {
-  return { ok: false, error }
+export function fail(error: ErrorCode, detail?: string): Response<never> {
+  return { ok: false, error, ...(detail ? { detail } : {}) }
 }
 
 /** Typed wrapper so callers never hand-roll sendMessage payloads. */

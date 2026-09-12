@@ -5,6 +5,7 @@
  * CSP and CORS rules, which differ from site to site.
  */
 import { cacheKey, getCached, putCached } from '../lib/cache'
+import { describeWait, recordRefusal, recordSuccess, remainingSeconds } from './cooldown'
 import { createGoogleCloud } from '../lib/providers/google-cloud'
 import { googleGtx } from '../lib/providers/google-gtx'
 import {
@@ -61,6 +62,15 @@ export async function translate(
   const cached = await getCached(key)
   if (cached) return withLanguages(cached, from, to)
 
+  // Checked after the cache: a known word must keep working while we are in the doghouse.
+  const waiting = await remainingSeconds()
+  if (waiting > 0) {
+    throw new ProviderError(
+      'rate-limited',
+      `Google is refusing requests. Try again in ${describeWait(waiting)}.`,
+    )
+  }
+
   const providers = await providerChain(settings.apiKey)
   let lastError = new ProviderError('provider-failed', 'no provider available')
 
@@ -68,12 +78,24 @@ export async function translate(
     try {
       const result = await callWithRetry(provider, resolved)
       await putCached(key, result)
+      await recordSuccess()
       return withLanguages(result, from, to)
     } catch (error) {
       lastError = asProviderError(error)
       // A malformed request fails identically everywhere; trying the next provider is pointless.
       if (lastError.code === 'bad-request') throw lastError
     }
+  }
+
+  // Every provider refused. Stop asking for a while: each further request both fails and
+  // keeps the block alive.
+  if (lastError.code === 'rate-limited') {
+    const wait = await recordRefusal()
+    throw new ProviderError(
+      'rate-limited',
+      `Google is refusing requests. Try again in ${describeWait(wait)}.`,
+      lastError,
+    )
   }
 
   throw lastError

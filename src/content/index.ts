@@ -118,7 +118,7 @@ async function onTrigger(trigger: Trigger): Promise<void> {
   shownAt = Date.now()
 
   if (!response.ok) {
-    tooltip.showError(trigger.rect, ERROR_MESSAGES[response.error])
+    tooltip.showError(trigger.rect, response.detail ?? ERROR_MESSAGES[response.error])
     return
   }
 
