@@ -24,6 +24,12 @@ const NETWORK_RETRY_DELAYS_MS = [400, 1200]
 
 const limiter = new RateLimiter(300, 60, 60_000)
 
+/**
+ * What the caller gets back: the provider's result plus the language pair actually used.
+ * The tooltip shows it, and a saved card needs it long after the settings have changed.
+ */
+export type TranslationOutcome = TranslateResult & { from: string; to: string }
+
 export function normalize(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
 }
@@ -36,7 +42,9 @@ async function providerChain(apiKey: string): Promise<TranslationProvider[]> {
   return apiKey.trim() === '' ? [googleGtx] : [createGoogleCloud(apiKey.trim()), googleGtx]
 }
 
-export async function translate(request: Partial<TranslateRequest>): Promise<TranslateResult> {
+export async function translate(
+  request: Partial<TranslateRequest>,
+): Promise<TranslationOutcome> {
   const settings = await getSettings()
 
   const text = normalize(request.text ?? '')
@@ -53,7 +61,7 @@ export async function translate(request: Partial<TranslateRequest>): Promise<Tra
   const key = cacheKey(resolved)
 
   const cached = await getCached(key)
-  if (cached) return cached
+  if (cached) return withLanguages(cached, from, to)
 
   const providers = await providerChain(settings.apiKey)
   let lastError = new ProviderError('provider-failed', 'no provider available')
@@ -62,7 +70,7 @@ export async function translate(request: Partial<TranslateRequest>): Promise<Tra
     try {
       const result = await callWithRetry(provider, resolved)
       await putCached(key, result)
-      return result
+      return withLanguages(result, from, to)
     } catch (error) {
       lastError = asProviderError(error)
       // A malformed request fails identically everywhere; trying the next provider is pointless.
@@ -71,6 +79,11 @@ export async function translate(request: Partial<TranslateRequest>): Promise<Tra
   }
 
   throw lastError
+}
+
+/** The detected language wins over 'auto': the card must record what was really translated. */
+function withLanguages(result: TranslateResult, from: string, to: string): TranslationOutcome {
+  return { ...result, from: result.detectedFrom ?? from, to }
 }
 
 /**
