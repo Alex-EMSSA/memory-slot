@@ -61,6 +61,12 @@ async function handleTranslate(request: Extract<Request, { type: 'translate' }>)
   } catch (error) {
     const failure = asProviderError(error)
     console.warn('[memory-slot] translation failed:', failure.code, failure.message)
+    // Kept verbatim: a friendly message in the tooltip is no use when diagnosing why.
+    await recordDiagnostic({
+      event: 'translation-failed',
+      code: failure.code,
+      detail: failure.message,
+    })
     return fail(failure.code)
   }
 }

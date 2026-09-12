@@ -6,10 +6,30 @@
  * It lives in a closed shadow root attached to documentElement. Closed keeps page scripts
  * out; documentElement rather than body because plenty of sites replace body wholesale.
  */
+import { readableTextColour } from '../lib/colour'
 import { placeTooltip, type Box } from './placement'
 
 const STYLES = `
 :host { all: initial; }
+
+/* Defaults follow the system theme; a colour chosen in the settings overrides them. */
+:host {
+  --ms-bg: #ffffff;
+  --ms-fg: #1f2328;
+  --ms-border: rgba(0, 0, 0, 0.08);
+  --ms-shadow: rgba(0, 0, 0, 0.18);
+  --ms-error: #b3261e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --ms-bg: #26252b;
+    --ms-fg: #f2f2f4;
+    --ms-border: rgba(255, 255, 255, 0.12);
+    --ms-shadow: rgba(0, 0, 0, 0.5);
+    --ms-error: #f2b8b5;
+  }
+}
 
 .box {
   all: initial;
@@ -20,10 +40,10 @@ const STYLES = `
   max-width: 320px;
   padding: 7px 10px;
   border-radius: 8px;
-  background: #ffffff;
-  color: #1f2328;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  background: var(--ms-bg);
+  color: var(--ms-fg);
+  border: 1px solid var(--ms-border);
+  box-shadow: 0 4px 16px var(--ms-shadow);
   font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
   text-align: left;
   white-space: normal;
@@ -31,28 +51,9 @@ const STYLES = `
   pointer-events: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .box {
-    background: #26252b;
-    color: #f2f2f4;
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  }
-}
-
 .text { font-weight: 500; }
 
-.meta {
-  margin-top: 2px;
-  font-size: 11px;
-  opacity: 0.6;
-}
-
-.error { color: #b3261e; }
-
-@media (prefers-color-scheme: dark) {
-  .error { color: #f2b8b5; }
-}
+.error { color: var(--ms-error); }
 
 .dots { display: inline-block; letter-spacing: 2px; opacity: 0.6; }
 
@@ -80,6 +81,9 @@ export class Tooltip {
   /** The text this tooltip is currently about, so a repeat gesture can be ignored. */
   private subject = ''
 
+  /** Empty means "follow the system theme". Applied to the host as CSS variables. */
+  private colour = ''
+
   showLoading(rect: Box, subject: string): void {
     this.subject = subject
     const box = this.ensure()
@@ -87,10 +91,9 @@ export class Tooltip {
     this.place(rect)
   }
 
-  showResult(rect: Box, text: string, meta: string): void {
+  showResult(rect: Box, text: string): void {
     const box = this.ensure()
     box.replaceChildren(element('div', 'text', text))
-    if (meta !== '') box.append(element('div', 'meta', meta))
     this.place(rect)
   }
 
@@ -98,6 +101,28 @@ export class Tooltip {
     const box = this.ensure()
     box.replaceChildren(element('div', 'text error', message))
     this.place(rect)
+  }
+
+  /** Applied live: changing the colour in the settings must not need a page reload. */
+  setColour(colour: string): void {
+    this.colour = colour
+    this.applyColour()
+  }
+
+  private applyColour(): void {
+    const host = this.host
+    if (!host) return
+
+    if (this.colour === '') {
+      host.style.removeProperty('--ms-bg')
+      host.style.removeProperty('--ms-fg')
+      host.style.removeProperty('--ms-border')
+      return
+    }
+
+    host.style.setProperty('--ms-bg', this.colour)
+    host.style.setProperty('--ms-fg', readableTextColour(this.colour))
+    host.style.setProperty('--ms-border', 'transparent')
   }
 
   hide(): void {
@@ -160,6 +185,7 @@ export class Tooltip {
 
     this.host = host
     this.box = box
+    this.applyColour()
     return box
   }
 

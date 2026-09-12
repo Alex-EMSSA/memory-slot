@@ -25,6 +25,8 @@ const STATIC_ASSETS = [
   ['src/_locales', '_locales'],
   ['src/pages/popup/popup.html', 'popup.html'],
   ['src/pages/popup/popup.css', 'popup.css'],
+  ['src/pages/options/options.html', 'options.html'],
+  ['src/pages/options/options.css', 'options.css'],
 ]
 
 async function copyStatic() {
@@ -50,6 +52,7 @@ const ctx = await context({
   entryPoints: {
     background: 'src/background/index.ts',
     content: 'src/content/index.ts',
+    options: 'src/pages/options/options.ts',
     popup: 'src/pages/popup/popup.ts',
   },
   outdir,

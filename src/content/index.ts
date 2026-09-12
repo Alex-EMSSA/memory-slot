@@ -7,6 +7,7 @@
  * M4 adds the floating card window.
  */
 import { ok, send, type ErrorCode, type Request, type Response } from '../lib/messages'
+import { getSettings, SETTINGS_KEY } from '../lib/store/settings'
 import { contains } from './placement'
 import { Tooltip } from './tooltip'
 import { startTrigger, type Trigger } from './trigger'
@@ -77,7 +78,7 @@ async function onTrigger(trigger: Trigger): Promise<void> {
   if (id !== generation || !tooltip.visible) return
 
   if (response.ok) {
-    tooltip.showResult(trigger.rect, response.data.text, `${response.data.from} → ${response.data.to}`)
+    tooltip.showResult(trigger.rect, response.data.text)
   } else {
     tooltip.showError(trigger.rect, ERROR_MESSAGES[response.error])
   }
@@ -119,6 +120,7 @@ function stop(): void {
   stopTrigger?.()
   stopTrigger = null
 
+  browser.storage.local.onChanged.removeListener(onStorageChanged)
   document.removeEventListener('mouseover', onMouseOver, true)
   document.removeEventListener('mousedown', hideNow, true)
   document.removeEventListener('keydown', onKeyDown, true)
@@ -132,8 +134,19 @@ function stop(): void {
   console.info('[memory-slot] stopped on', location.origin)
 }
 
+/** Applied live, so changing the colour in the settings does not need a page reload. */
+function onStorageChanged(changes: Record<string, browser.storage.StorageChange>): void {
+  const change = changes[SETTINGS_KEY]
+  if (!change) return
+  const next = change.newValue as { tooltipColour?: string } | undefined
+  tooltip.setColour(next?.tooltipColour ?? '')
+}
+
 function start(): void {
   browser.runtime.onMessage.addListener(onMessage)
+  browser.storage.local.onChanged.addListener(onStorageChanged)
+
+  void getSettings().then((settings) => tooltip.setColour(settings.tooltipColour))
 
   stopTrigger = startTrigger((trigger) => void onTrigger(trigger))
 

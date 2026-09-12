@@ -55,18 +55,37 @@ async function currentPage(): Promise<Page> {
 
 /**
  * Only genuine failures are shown. Everything else belongs in the hint, in plain words.
- * These strings come from the browser, so they are reported verbatim rather than guessed at.
+ * These strings come from the browser or from Google, so they are reported verbatim
+ * rather than guessed at.
  */
-function showProblems(badge: string): void {
+async function showProblems(badge: string): Promise<void> {
   const problems: string[] = []
   if (badge !== 'ok' && badge !== 'skipped') problems.push(`toolbar: ${badge}`)
   if (lastInjection !== 'ok' && lastInjection !== 'not attempted') {
     problems.push(`could not start on this page: ${lastInjection}`)
   }
 
+  const recorded = await lastRecordedProblem()
+  if (recorded !== '') problems.push(recorded)
+
   const node = el('diag')
   node.textContent = problems.join(' · ')
   node.hidden = problems.length === 0
+}
+
+/** The background page records what failed; its own console is gone once it unloads. */
+async function lastRecordedProblem(): Promise<string> {
+  try {
+    const stored = (await browser.storage.local.get('diag.v1'))['diag.v1'] as
+      | Record<string, unknown>
+      | undefined
+    if (!stored) return ''
+    return Object.entries(stored)
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .join(' ')
+  } catch {
+    return ''
+  }
 }
 
 /** Renders the whole popup from the real state of the page. Safe to call at any time. */
@@ -77,7 +96,7 @@ async function refresh(): Promise<void> {
   if (!page.target) {
     el('host').textContent = 'not a web page'
     el('hint').textContent = 'Memory Slot works on ordinary web pages only.'
-    showProblems('skipped')
+    await showProblems('skipped')
     input.checked = false
     input.disabled = true
     return
@@ -101,7 +120,7 @@ async function refresh(): Promise<void> {
     el('hint').textContent = `On for ${page.target.host}. Reload this page to start using it here.`
   }
 
-  showProblems(badge)
+  await showProblems(badge)
 }
 
 async function enable(target: SiteTarget, tabId: number): Promise<void> {
@@ -170,7 +189,7 @@ async function init(): Promise<void> {
 
   el<HTMLAnchorElement>('options').addEventListener('click', (event) => {
     event.preventDefault()
-    // M6 registers options_ui; until then there is nothing to open.
+    void browser.runtime.openOptionsPage()
   })
 
   toggle().addEventListener('change', () => {

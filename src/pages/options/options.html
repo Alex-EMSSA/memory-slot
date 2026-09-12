@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Memory Slot — Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1 class="title">Memory Slot</h1>
+
+      <section class="group">
+        <h2 class="group__title">Translation</h2>
+
+        <label class="row" for="target-lang">
+          <span class="row__label">
+            Translate into
+            <span class="row__note">The language you are learning.</span>
+          </span>
+          <select class="control" id="target-lang"></select>
+        </label>
+
+        <label class="row" for="source-lang">
+          <span class="row__label">
+            Translate from
+            <span class="row__note">Detect automatically unless you always read one language.</span>
+          </span>
+          <select class="control" id="source-lang"></select>
+        </label>
+      </section>
+
+      <section class="group">
+        <h2 class="group__title">Appearance</h2>
+
+        <div class="row">
+          <span class="row__label">
+            Tooltip colour
+            <span class="row__note">
+              Pick a background; the text colour follows it so it always stays readable.
+            </span>
+          </span>
+          <span class="colour">
+            <input type="color" id="tooltip-colour" value="#4f46e5" aria-label="Tooltip colour" />
+            <button class="button" id="colour-auto" type="button">Automatic</button>
+          </span>
+        </div>
+
+        <div class="preview" id="preview">
+          <span class="preview__box" id="preview-box">привіт</span>
+          <span class="preview__note" id="preview-note">Following your system light and dark theme.</span>
+        </div>
+      </section>
+
+      <p class="saved" id="saved" hidden>Saved.</p>
+
+      <footer class="foot">
+        <a href="#" id="support">Support this project</a>
+        <span class="foot__version" id="version"></span>
+      </footer>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

@@ -10,6 +10,11 @@ export type Settings = {
   sourceLang: string
   /** Optional Google Cloud Translation key. Empty means "use the free endpoint". */
   apiKey: string
+  /**
+   * Tooltip background as #rrggbb. Empty means follow the system light/dark theme.
+   * The text colour is derived from it, never chosen separately.
+   */
+  tooltipColour: string
 }
 
 const STORAGE_KEY = 'settings.v1'
@@ -27,8 +32,11 @@ function defaultTargetLang(): string {
 }
 
 export function defaultSettings(): Settings {
-  return { targetLang: defaultTargetLang(), sourceLang: 'auto', apiKey: '' }
+  return { targetLang: defaultTargetLang(), sourceLang: 'auto', apiKey: '', tooltipColour: '' }
 }
+
+/** Storage key, exported so listeners can tell our changes from anyone else's. */
+export const SETTINGS_KEY = STORAGE_KEY
 
 export async function getSettings(): Promise<Settings> {
   const defaults = defaultSettings()
