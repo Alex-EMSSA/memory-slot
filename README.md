@@ -34,11 +34,43 @@ Other scripts:
 | `npm test` | vitest, offline only |
 | `npm run test:live` | hits Google for real; run it when you suspect the endpoint changed |
 | `npm run package` | zip for AMO in `web-ext-artifacts/` |
+| `npm run sign` | signed .xpi for everyday use, see below |
 
 `src/` is never loaded directly — Firefox always runs the build in `dist/`.
 
 The dev run uses its own Firefox profile in `.web-ext-profile/` and keeps it between runs, so
 enabled sites and saved cards survive a restart. Delete the directory for a clean slate.
+
+## Installing it in your everyday Firefox
+
+Release Firefox refuses to install an unsigned extension permanently, and a temporary install
+from `about:debugging` disappears when the browser restarts. To actually live with it for a
+while, sign it on AMO in the **unlisted** channel: no public listing, automated review, and a
+`.xpi` that installs like any other add-on.
+
+1. Sign in at [addons.mozilla.org](https://addons.mozilla.org) and create API credentials at
+   **Tools → Manage API Keys**.
+2. Put them in the environment — never in a file in this repository:
+
+   ```bash
+   export WEB_EXT_API_KEY="user:12345678:123"
+   export WEB_EXT_API_SECRET="…"
+   ```
+
+   On Windows PowerShell: `$env:WEB_EXT_API_KEY = "…"`.
+3. `npm version patch` — bumps the number, syncs it into the manifest, commits and tags. AMO
+   refuses a version it has already seen, so every signed build needs a new one.
+4. `npm run sign` — the signed `.xpi` lands in `web-ext-artifacts/`. Open it in Firefox, or drag
+   it onto the browser window.
+
+Two things that are permanent from the first signed build onwards:
+
+- **The extension id** (`browser_specific_settings.gecko.id`). Change it before signing or never.
+- Cards and settings belong to that id, so keeping it means everything collected while testing
+  carries over to the published version later.
+
+An unlisted build does not update itself. Each new version means signing again and installing
+the new `.xpi` over the old one; settings and cards survive that.
 
 ## Layout
 

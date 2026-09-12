@@ -20,7 +20,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:live": "vitest run --config vitest.live.config.ts",
-    "package": "npm run build && web-ext build --source-dir dist --overwrite-dest"
+    "package": "npm run build && web-ext build --source-dir dist --overwrite-dest",
+    "sign": "npm run build && web-ext sign --source-dir dist --channel unlisted",
+    "version": "node scripts/sync-version.mjs && git add src/manifest.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
