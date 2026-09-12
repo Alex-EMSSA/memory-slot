@@ -12,6 +12,7 @@
 import { context } from 'esbuild'
 import { cp, mkdir, rm } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
+import { pinToolbarButton } from './scripts/pin-toolbar-button.mjs'
 
 const watch = process.argv.includes('--watch')
 const run = process.argv.includes('--run')
@@ -67,8 +68,12 @@ if (watch) {
   await ctx.watch()
   console.log(`[build] watching, output in ${outdir}/`)
   if (run) {
+    // Must happen before Firefox starts: it rewrites prefs.js on exit.
+    console.log(`[build] toolbar button: ${pinToolbarButton('.web-ext-profile')}`)
+
     // web-ext reloads the extension itself whenever dist/ changes.
-    const webExt = spawn('npx', ['web-ext', 'run'], { stdio: 'inherit', shell: true })
+    // One string rather than argv: with shell:true Node deprecates the array form.
+    const webExt = spawn('npx web-ext run', { stdio: 'inherit', shell: true })
     webExt.on('exit', async (code) => {
       await ctx.dispose()
       process.exit(code ?? 0)
