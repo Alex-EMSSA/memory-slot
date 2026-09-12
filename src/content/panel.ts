@@ -176,6 +176,7 @@ export class Panel {
   private head: HTMLElement | null = null
   private body: HTMLElement | null = null
   private title: HTMLElement | null = null
+  private fold: HTMLElement | null = null
 
   private state: PanelState = defaultPanelState()
   private colour = ''
@@ -227,6 +228,7 @@ export class Panel {
     this.head = null
     this.body = null
     this.title = null
+    this.fold = null
   }
 
   private speakButton(phrase: string, language: string): HTMLElement {
@@ -279,6 +281,7 @@ export class Panel {
 
     const fold = iconButton('–', 'Minimise')
     fold.addEventListener('click', () => this.toggleMinimised())
+    this.fold = fold
 
     const close = iconButton('×', 'Close')
     close.addEventListener('click', () => this.close())
@@ -422,6 +425,14 @@ export class Panel {
     host.style.setProperty('display', this.state.closed ? 'none' : 'block', 'important')
     body.hidden = this.state.minimized
     if (this.title) this.title.textContent = 'Memory Slot'
+
+    // The button shows what pressing it will do, not what the window currently is.
+    if (this.fold) {
+      const label = this.state.minimized ? 'Expand' : 'Minimise'
+      this.fold.textContent = this.state.minimized ? '+' : '–'
+      this.fold.setAttribute('aria-label', label)
+      this.fold.title = label
+    }
 
     // Folding changes the height, so the window may now hang off the bottom of the screen.
     this.applyPosition()
