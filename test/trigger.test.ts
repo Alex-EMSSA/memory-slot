@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { isEditable, isTranslatable } from '../src/content/trigger'
+import { isEditable, isTooLong, isTranslatable } from '../src/content/trigger'
 
 describe('isTranslatable', () => {
   it('accepts a word and a phrase', () => {
@@ -26,9 +26,24 @@ describe('isTranslatable', () => {
     expect(isTranslatable('€ 42,00')).toBe(false)
   })
 
-  it('ignores a selection longer than a flashcard', () => {
-    expect(isTranslatable('word '.repeat(41))).toBe(false)
-    expect(isTranslatable('word '.repeat(39))).toBe(true)
+  /** Length is judged separately, so an over-long selection can be reported rather than dropped. */
+  it('does not judge length', () => {
+    expect(isTranslatable('word '.repeat(400))).toBe(true)
+  })
+})
+
+describe('isTooLong', () => {
+  it('accepts a paragraph', () => {
+    expect(isTooLong('word '.repeat(100))).toBe(false)
+  })
+
+  it('rejects a selection past the shared limit', () => {
+    expect(isTooLong('x'.repeat(1001))).toBe(true)
+    expect(isTooLong('x'.repeat(1000))).toBe(false)
+  })
+
+  it('measures the trimmed text, not the surrounding whitespace', () => {
+    expect(isTooLong(`  ${'x'.repeat(1000)}  `)).toBe(false)
   })
 })
 

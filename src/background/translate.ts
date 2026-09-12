@@ -14,11 +14,9 @@ import {
   type TranslateResult,
   type TranslationProvider,
 } from '../lib/providers/types'
+import { MAX_TRANSLATION_LENGTH } from '../lib/limits'
 import { RateLimiter } from '../lib/rate-limit'
 import { getSettings } from '../lib/store/settings'
-
-/** Long enough for a sentence with its context, short enough to stay a flashcard. */
-const MAX_TEXT_LENGTH = 1000
 
 const NETWORK_RETRY_DELAYS_MS = [400, 1200]
 
@@ -52,8 +50,8 @@ export async function translate(
   const to = request.to ?? settings.targetLang
 
   if (text === '') throw new ProviderError('bad-request', 'nothing to translate')
-  if (text.length > MAX_TEXT_LENGTH) {
-    throw new ProviderError('bad-request', `text longer than ${MAX_TEXT_LENGTH} characters`)
+  if (text.length > MAX_TRANSLATION_LENGTH) {
+    throw new ProviderError('bad-request', `text longer than ${MAX_TRANSLATION_LENGTH} characters`)
   }
   if (!to) throw new ProviderError('bad-request', 'no target language')
 

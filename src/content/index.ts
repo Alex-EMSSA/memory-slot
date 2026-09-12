@@ -7,6 +7,7 @@
  * M4 adds the floating card window.
  */
 import { ok, send, type ErrorCode, type Request, type Response } from '../lib/messages'
+import { MAX_TRANSLATION_LENGTH } from '../lib/limits'
 import { getSettings, SETTINGS_KEY } from '../lib/store/settings'
 import { contains } from './placement'
 import { Tooltip } from './tooltip'
@@ -22,12 +23,26 @@ const HIDE_DELAY_MS = 150
 /** Pointer slack around the text and the tooltip, in pixels. */
 const HOVER_SLACK = 12
 
+/**
+ * How long a freshly arrived translation is protected from the hover-away rule.
+ *
+ * Without this, a slow answer is wasted: the user drags across a phrase, moves the mouse
+ * while waiting, and the result lands in a tooltip that has already been dismissed.
+ */
+const GRACE_MS = 1200
+
 const tooltip = new Tooltip()
 
 /** Bumped on every gesture so a slow answer for an old word cannot overwrite a new one. */
 let generation = 0
 let hideTimer: number | undefined
 let stopTrigger: (() => void) | null = null
+
+/** A request is in flight: moving the mouse must not throw away the answer we are waiting for. */
+let waiting = false
+
+/** When the current result appeared, for the grace period above. */
+let shownAt = 0
 
 const ERROR_MESSAGES: Record<ErrorCode, string> = {
   network: 'No connection.',
@@ -55,6 +70,8 @@ function scheduleHide(): void {
 
 function hideNow(): void {
   cancelHide()
+  waiting = false
+  shownAt = 0
   tooltip.hide()
 }
 
@@ -65,8 +82,21 @@ async function onTrigger(trigger: Trigger): Promise<void> {
     return
   }
 
+  if (trigger.tooLong) {
+    cancelHide()
+    generation += 1
+    waiting = false
+    shownAt = Date.now()
+    tooltip.showError(
+      trigger.rect,
+      `Too long to translate: ${trigger.text.length} characters, the limit is ${MAX_TRANSLATION_LENGTH}.`,
+    )
+    return
+  }
+
   const id = ++generation
   cancelHide()
+  waiting = true
   tooltip.showLoading(trigger.rect, trigger.text)
 
   const response = await send<{ text: string; from: string; to: string }>({
@@ -74,8 +104,14 @@ async function onTrigger(trigger: Trigger): Promise<void> {
     text: trigger.text,
   })
 
-  // Superseded by a newer gesture, or dismissed while we waited.
-  if (id !== generation || !tooltip.visible) return
+  // Superseded by a newer gesture, or dismissed deliberately while we waited.
+  if (id !== generation || !tooltip.visible) {
+    if (id === generation) waiting = false
+    return
+  }
+
+  waiting = false
+  shownAt = Date.now()
 
   if (response.ok) {
     tooltip.showResult(trigger.rect, response.data.text)
@@ -87,6 +123,13 @@ async function onTrigger(trigger: Trigger): Promise<void> {
 /** Moving onto other text is the dismissal gesture: nothing has to be clicked. */
 function onMouseOver(event: MouseEvent): void {
   if (!tooltip.visible) return
+
+  // Waiting for an answer, or the answer has only just arrived: the user gets to read it.
+  // Escape, a click and scrolling still dismiss, because those are deliberate.
+  if (waiting || Date.now() - shownAt < GRACE_MS) {
+    cancelHide()
+    return
+  }
 
   const anchor = tooltip.anchorRect
   const box = tooltip.boxRect
