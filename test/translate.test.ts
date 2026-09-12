@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { installBrowserStub, jsonResponse } from './helpers/browser-stub'
+import { installBrowserStub, jsonResponse, textResponse } from './helpers/browser-stub'
 import { rejection } from './helpers/rejection'
 
 const GTX_HELLO = [[['привіт', 'hello', null, null, 10]], null, 'en']
 const CLOUD_HELLO = { data: { translations: [{ translatedText: 'привіт' }] } }
 const MYMEMORY_HELLO = { responseData: { translatedText: 'привіт' }, responseStatus: 200 }
+
+/** Enough of the Bing translator page for the credentials to be read out of it. */
+const BING_PAGE = `<html>var _G = {IG:"IG0123456789"};
+<div data-iid="translator.5023"></div>
+params_AbusePreventionHelper = [1757692800000,"tok3n",3600000];</html>`
+const BING_HELLO = [{ detectedLanguage: { language: 'en' }, translations: [{ text: 'привіт' }] }]
 
 /** Fresh modules per test: the cache and the rate limiter both keep module-scope state. */
 async function loadTranslate(settings?: Record<string, unknown>) {
@@ -131,27 +137,52 @@ describe('translate', () => {
   it('does not retry a provider that throttled us', async () => {
     vi.useFakeTimers()
     const { translate } = await loadTranslate()
-    const fetchMock = stubFetch(jsonResponse([], 429), jsonResponse(MYMEMORY_HELLO))
+    const fetchMock = stubFetch(
+      jsonResponse([], 429),
+      textResponse(BING_PAGE),
+      jsonResponse(BING_HELLO),
+    )
 
     const pending = translate({ text: 'hello', from: 'auto', to: 'uk' })
     await vi.runAllTimersAsync()
 
     await expect(pending).resolves.toMatchObject({ text: 'привіт' })
-    // Once to Google, once to the stand-in. No second attempt at the one that refused.
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    // Google once, then Bing's page and its endpoint. No second attempt at the one that refused.
+    expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
   /** The whole point of a second provider: Google refusing must not stop the reader. */
-  it('falls back to MyMemory when Google refuses', async () => {
+  it('falls back to Bing when Google refuses', async () => {
     vi.useFakeTimers()
     const { translate } = await loadTranslate()
-    const fetchMock = stubFetch(jsonResponse([], 429), jsonResponse(MYMEMORY_HELLO))
+    const fetchMock = stubFetch(
+      jsonResponse([], 429),
+      textResponse(BING_PAGE),
+      jsonResponse(BING_HELLO),
+    )
 
     const pending = translate({ text: 'hello', from: 'auto', to: 'uk' })
     await vi.runAllTimersAsync()
 
     await expect(pending).resolves.toMatchObject({ text: 'привіт' })
-    expect(new URL(fetchMock.mock.calls[1]?.[0] as string).origin).toBe(
+    expect(new URL(fetchMock.mock.calls[2]?.[0] as string).origin).toBe('https://www.bing.com')
+  })
+
+  it('falls all the way through to MyMemory when both refuse', async () => {
+    vi.useFakeTimers()
+    const { translate } = await loadTranslate()
+    const fetchMock = stubFetch(
+      jsonResponse([], 429),
+      textResponse(BING_PAGE),
+      jsonResponse({ statusCode: 429 }),
+      jsonResponse(MYMEMORY_HELLO),
+    )
+
+    const pending = translate({ text: 'hello', from: 'auto', to: 'uk' })
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toMatchObject({ text: 'привіт' })
+    expect(new URL(fetchMock.mock.calls[3]?.[0] as string).origin).toBe(
       'https://api.mymemory.translated.net',
     )
   })
@@ -160,28 +191,32 @@ describe('translate', () => {
     vi.useFakeTimers()
     const { translate } = await loadTranslate()
 
-    const first = stubFetch(jsonResponse([], 429), jsonResponse(MYMEMORY_HELLO))
+    const first = stubFetch(jsonResponse([], 429), textResponse(BING_PAGE), jsonResponse(BING_HELLO))
     const pendingFirst = translate({ text: 'hello', from: 'auto', to: 'uk' })
     await vi.runAllTimersAsync()
     await pendingFirst
-    expect(first).toHaveBeenCalledTimes(2)
+    expect(first).toHaveBeenCalledTimes(3)
 
-    // A different word, so the cache cannot answer it. Google is still resting.
-    const second = stubFetch(jsonResponse(MYMEMORY_HELLO))
+    // A different word, so the cache cannot answer it. Google is still resting, and Bing's
+    // credentials are still good, so this costs exactly one request.
+    const second = stubFetch(jsonResponse(BING_HELLO))
     const pendingSecond = translate({ text: 'world', from: 'auto', to: 'uk' })
     await vi.runAllTimersAsync()
     await pendingSecond
 
     expect(second).toHaveBeenCalledTimes(1)
-    expect(new URL(second.mock.calls[0]?.[0] as string).origin).toBe(
-      'https://api.mymemory.translated.net',
-    )
+    expect(new URL(second.mock.calls[0]?.[0] as string).origin).toBe('https://www.bing.com')
   })
 
   it('reports the shortest wait when every provider has refused', async () => {
     vi.useFakeTimers()
     const { translate } = await loadTranslate()
-    stubFetch(jsonResponse([], 429), jsonResponse({ responseData: {}, responseStatus: 429 }, 429))
+    stubFetch(
+      jsonResponse([], 429),
+      textResponse(BING_PAGE),
+      jsonResponse({ statusCode: 429 }),
+      jsonResponse({ responseData: {}, responseStatus: 429 }, 429),
+    )
 
     const pending = rejection(translate({ text: 'hello', from: 'auto', to: 'uk' }))
     await vi.runAllTimersAsync()

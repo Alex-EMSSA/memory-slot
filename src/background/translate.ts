@@ -7,6 +7,7 @@
 import { cacheKey, getCached, putCached } from '../lib/cache'
 import { describeWait, recordRefusal, recordSuccess, remainingSeconds } from './cooldown'
 import { createGoogleCloud } from '../lib/providers/google-cloud'
+import { bing } from '../lib/providers/bing'
 import { googleGtx } from '../lib/providers/google-gtx'
 import { myMemory } from '../lib/providers/mymemory'
 import {
@@ -37,12 +38,13 @@ export function normalize(text: string): string {
 /**
  * Who gets asked, in order.
  *
- * A user key is the stable, sanctioned path, so it goes first when there is one. Google's
- * free endpoint gives the best quality of the rest. MyMemory sits behind it as the answer to
- * "Google is refusing us today" — slower and more variable, but it works when Google will not.
+ * A user key is the stable, sanctioned path, so it goes first when there is one. Then the
+ * keyless three in descending order of both quality and reliability: Google, Bing, MyMemory.
+ * Bing is the most fragile of them — its credentials are read off a live web page — so it sits
+ * behind Google, but its translations are far better than the last resort's.
  */
 function providerChain(apiKey: string): TranslationProvider[] {
-  const free = [googleGtx, myMemory]
+  const free = [googleGtx, bing, myMemory]
   return apiKey.trim() === '' ? free : [createGoogleCloud(apiKey.trim()), ...free]
 }
 

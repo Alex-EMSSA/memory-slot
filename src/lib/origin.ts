@@ -38,6 +38,7 @@ export function siteTarget(url: string | undefined): SiteTarget | null {
 export const API_ORIGINS: readonly string[] = [
   'https://translate.googleapis.com/*',
   'https://translation.googleapis.com/*',
+  'https://www.bing.com/*',
   'https://api.mymemory.translated.net/*',
 ]
 

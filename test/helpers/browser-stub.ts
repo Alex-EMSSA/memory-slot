@@ -104,6 +104,10 @@ export function installBrowserStub(initial: Store = {}, origins: string[] = []):
   return state
 }
 
+export function textResponse(body: string, status = 200): Response {
+  return new Response(body, { status, headers: { 'Content-Type': 'text/html' } })
+}
+
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
