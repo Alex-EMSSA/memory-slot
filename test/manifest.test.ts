@@ -49,6 +49,23 @@ describe('manifest', () => {
     )
   })
 
+  it('offers an icon at every size Firefox asks for', () => {
+    for (const size of ['16', '32', '48', '96', '128']) {
+      expect(manifest.icons[size]).toBeTruthy()
+      expect(manifest.action.default_icon[size]).toBeTruthy()
+    }
+  })
+
+  /** Every host here receives the reader's selected text, so the list is worth guarding. */
+  it('talks to exactly the translation services we documented', () => {
+    expect(manifest.host_permissions).toEqual([
+      'https://translate.googleapis.com/*',
+      'https://translation.googleapis.com/*',
+      'https://www.bing.com/*',
+      'https://api.mymemory.translated.net/*',
+    ])
+  })
+
   it('uses an event page, not a service worker', () => {
     expect(manifest.background.scripts).toEqual(['background.js'])
     expect(manifest.background.service_worker).toBeUndefined()

@@ -181,6 +181,10 @@ export class Tooltip {
     style.textContent = STYLES
     const box = document.createElement('div')
     box.className = 'box'
+    // The tooltip appears and vanishes on its own, so it is announced rather than focused:
+    // moving focus would yank the caret away from the text the reader is in the middle of.
+    box.setAttribute('role', 'status')
+    box.setAttribute('aria-live', 'polite')
     root.append(style, box)
 
     document.documentElement.append(host)

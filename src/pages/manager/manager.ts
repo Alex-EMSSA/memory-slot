@@ -4,20 +4,8 @@
  * An extension page shares the extension's origin, so it reads and writes the same IndexedDB
  * the background page uses — no message plumbing needed for what is essentially a table.
  */
-import {
-  allCards,
-  deleteCard,
-  importCards,
-  restoreCard,
-  type Card,
-} from '../../lib/store/db'
-import {
-  backupFilename,
-  BackupError,
-  parseBackup,
-  toBackup,
-  toCsv,
-} from '../../lib/store/export'
+import { allCards, deleteCard, importCards, restoreCard, type Card } from '../../lib/store/db'
+import { backupFilename, BackupError, parseBackup, toBackup, toCsv } from '../../lib/store/export'
 
 let cards: Card[] = []
 const selected = new Set<string>()
@@ -50,6 +38,8 @@ function formatDate(at: number): string {
 
 function status(message: string, undo?: () => void): void {
   const node = el('status')
+  // Deleting a row removes it from under the reader; the outcome has to be spoken.
+  node.setAttribute('role', 'status')
   node.replaceChildren(document.createTextNode(message))
 
   if (undo) {
@@ -98,12 +88,15 @@ function renderRow(card: Card): HTMLTableRowElement {
   row.append(cell(pick))
 
   const front = editable(card.front, 'cell cell--front', (value) => update(card, { front: value }))
+  front.setAttribute('aria-label', `Word: ${card.front}`)
   const frontCell = cell(front)
   if (card.context) frontCell.append(text('div', 'context', card.context))
   if (card.sourceUrl) frontCell.append(sourceLink(card))
   row.append(frontCell)
 
-  row.append(cell(editable(card.back, 'cell', (value) => update(card, { back: value }))))
+  const back = editable(card.back, 'cell', (value) => update(card, { back: value }))
+  back.setAttribute('aria-label', `Translation of ${card.front}`)
+  row.append(cell(back))
   row.append(cell(document.createTextNode(`${card.langFrom} → ${card.langTo}`), 'cards__meta'))
   row.append(cell(document.createTextNode(formatDate(card.createdAt)), 'cards__meta'))
 
@@ -143,7 +136,11 @@ function sourceLink(card: Card): HTMLAnchorElement {
   return link
 }
 
-function editable(value: string, className: string, save: (next: string) => void): HTMLInputElement {
+function editable(
+  value: string,
+  className: string,
+  save: (next: string) => void,
+): HTMLInputElement {
   const input = document.createElement('input')
   input.className = className
   input.value = value
@@ -171,7 +168,8 @@ async function removeCards(doomed: Card[]): Promise<void> {
   undoable = doomed
   await reload()
 
-  const what = doomed.length === 1 ? `“${doomed[0]!.front}” deleted.` : `${doomed.length} cards deleted.`
+  const what =
+    doomed.length === 1 ? `“${doomed[0]!.front}” deleted.` : `${doomed.length} cards deleted.`
   status(what, async () => {
     for (const card of undoable) await restoreCard(card.id, card)
     clearStatus()
@@ -223,11 +221,7 @@ async function init(): Promise<void> {
   })
 
   el('export-json').addEventListener('click', () => {
-    download(
-      JSON.stringify(toBackup(cards), null, 2),
-      backupFilename('json'),
-      'application/json',
-    )
+    download(JSON.stringify(toBackup(cards), null, 2), backupFilename('json'), 'application/json')
   })
 
   el('export-csv').addEventListener('click', () => {

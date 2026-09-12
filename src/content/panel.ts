@@ -338,6 +338,8 @@ export class Panel {
 
     const frame = document.createElement('div')
     frame.className = 'frame'
+    frame.setAttribute('role', 'complementary')
+    frame.setAttribute('aria-label', 'Memory Slot card')
 
     const head = document.createElement('div')
     head.className = 'head'
@@ -361,6 +363,7 @@ export class Panel {
 
     const body = document.createElement('div')
     body.className = 'body'
+    body.setAttribute('aria-live', 'polite')
 
     frame.append(head, body)
     root.append(style, frame)

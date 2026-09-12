@@ -19,7 +19,9 @@ const VERSION = browser.runtime.getManifest().version
 browser.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     console.info(`[memory-slot] installed ${VERSION}`)
-    // M9: open the onboarding page that explains per-site enabling.
+    // Without this the reader double-clicks a word, nothing happens, and they conclude the
+    // extension is broken rather than switched off.
+    void browser.tabs.create({ url: browser.runtime.getURL('welcome.html') })
   } else if (details.reason === 'update') {
     console.info(`[memory-slot] updated to ${VERSION}`)
   }
