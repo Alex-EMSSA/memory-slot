@@ -337,6 +337,8 @@ export class Panel {
 
   private onPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return
+    if (!startsDrag(event.target)) return
+
     const frame = this.frame
     const head = this.head
     if (!frame || !head) return
@@ -435,6 +437,18 @@ export class Panel {
     host.style.setProperty('--ms-head-bg', this.colour)
     host.style.setProperty('--ms-head-fg', readableTextColour(this.colour))
   }
+}
+
+/**
+ * Whether a pointerdown in the header should begin a drag.
+ *
+ * The header captures the pointer while dragging, and a captured pointer never delivers its
+ * click to the child it started on — which is how the minimise and close buttons ended up
+ * doing nothing. A press on a control is a click, not a drag.
+ */
+export function startsDrag(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return true
+  return target.closest('.iconbutton') === null
 }
 
 function iconButton(glyph: string, label: string): HTMLElement {
