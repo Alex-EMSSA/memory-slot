@@ -10,6 +10,7 @@
  * down with it.
  */
 import { readableTextColour } from '../lib/colour'
+import { send } from '../lib/messages'
 import { clampToViewport, defaultPanelPosition } from './placement'
 import { registerUiRoot, unregisterUiRoot } from './ui-roots'
 import {
@@ -164,7 +165,10 @@ const STYLES = `
 .button:hover { border-color: var(--ms-muted); }
 .button:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 
-.empty {
+.button:disabled { opacity: 0.5; cursor: default; }
+
+.actions .note {
+  align-self: center;
   color: var(--ms-muted);
   font-size: 12px;
 }
@@ -180,6 +184,9 @@ export class Panel {
 
   private state: PanelState = defaultPanelState()
   private colour = ''
+
+  /** Cards waiting to be reviewed, shown in the header. */
+  private due = 0
 
   private dragging = false
   private grab = { x: 0, y: 0 }
@@ -209,9 +216,72 @@ export class Panel {
 
     const actions = document.createElement('div')
     actions.className = 'actions'
-    actions.append(this.speakButton(content.original, content.from))
     body.append(actions)
+    this.renderActions(actions, content)
 
+    this.applyVisibility()
+    void this.refreshDue()
+  }
+
+  private renderActions(actions: HTMLElement, content: CardContent): void {
+    const add = labelledButton('Add to deck')
+    add.addEventListener('click', () => void this.addCard(actions, content, add))
+
+    actions.replaceChildren(add, this.speakButton(content.original, content.from))
+  }
+
+  /**
+   * Saving happens in the background page. A content script's IndexedDB belongs to the site
+   * it runs on, so cards written here would be scattered across every page the reader visits.
+   */
+  private async addCard(
+    actions: HTMLElement,
+    content: CardContent,
+    add: HTMLButtonElement,
+  ): Promise<void> {
+    add.disabled = true
+
+    const response = await send<{ card: { id: string }; previous: unknown }>({
+      type: 'add-card',
+      front: content.original,
+      back: content.translation,
+      langFrom: content.from,
+      langTo: content.to,
+      ...(content.context ? { context: content.context } : {}),
+      sourceUrl: location.href,
+      sourceTitle: document.title,
+    })
+
+    if (!response.ok) {
+      add.disabled = false
+      actions.replaceChildren(text('span', 'note', 'Could not save this card.'), add)
+      return
+    }
+
+    // "Updated" rather than "Added" when the word was already in the deck: the reader met it
+    // again, usually in a better sentence, and a second copy of one word is a chore.
+    const updated = response.data.previous !== null
+    const note = text('span', 'note', updated ? 'Updated in your deck.' : 'Added to your deck.')
+
+    const undo = labelledButton('Undo')
+    undo.addEventListener('click', () => {
+      void send({
+        type: 'restore-card',
+        id: response.data.card.id,
+        previous: response.data.previous,
+      }).then(() => {
+        this.renderActions(actions, content)
+        void this.refreshDue()
+      })
+    })
+
+    actions.replaceChildren(note, undo)
+    void this.refreshDue()
+  }
+
+  private async refreshDue(): Promise<void> {
+    const response = await send<{ due: number }>({ type: 'due-count' })
+    this.due = response.ok ? response.data.due : 0
     this.applyVisibility()
   }
 
@@ -232,10 +302,7 @@ export class Panel {
   }
 
   private speakButton(phrase: string, language: string): HTMLElement {
-    const button = document.createElement('button')
-    button.className = 'button'
-    button.type = 'button'
-    button.textContent = 'Speak'
+    const button = labelledButton('Speak')
     button.addEventListener('click', () => {
       try {
         const utterance = new SpeechSynthesisUtterance(phrase)
@@ -424,7 +491,9 @@ export class Panel {
 
     host.style.setProperty('display', this.state.closed ? 'none' : 'block', 'important')
     body.hidden = this.state.minimized
-    if (this.title) this.title.textContent = 'Memory Slot'
+    if (this.title) {
+      this.title.textContent = this.due > 0 ? `Memory Slot · ${this.due} due` : 'Memory Slot'
+    }
 
     // The button shows what pressing it will do, not what the window currently is.
     if (this.fold) {
@@ -463,6 +532,14 @@ export class Panel {
 export function startsDrag(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return true
   return target.closest('.iconbutton') === null
+}
+
+function labelledButton(label: string): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.className = 'button'
+  button.type = 'button'
+  button.textContent = label
+  return button
 }
 
 function iconButton(glyph: string, label: string): HTMLElement {

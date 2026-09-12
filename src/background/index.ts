@@ -7,6 +7,7 @@
 import { flushCache } from '../lib/cache'
 import { fail, ok, type Request, type Response } from '../lib/messages'
 import { asProviderError } from '../lib/providers/types'
+import { countDue, restoreCard, saveCard, type Card } from '../lib/store/db'
 import { getSettings, patchSettings } from '../lib/store/settings'
 import { setToolbarState } from '../lib/toolbar'
 import { enabledSites, syncRegistrations } from './site-gate'
@@ -49,6 +50,12 @@ browser.runtime.onMessage.addListener(
         return handleTranslate(request)
       case 'content-ready':
         return handleContentReady(sender)
+      case 'add-card':
+        return handleAddCard(request)
+      case 'restore-card':
+        return handleRestoreCard(request)
+      case 'due-count':
+        return handleDueCount()
       default:
         return undefined
     }
@@ -68,6 +75,49 @@ async function handleTranslate(request: Extract<Request, { type: 'translate' }>)
       detail: failure.message,
     })
     return fail(failure.code)
+  }
+}
+
+async function handleAddCard(
+  request: Extract<Request, { type: 'add-card' }>,
+): Promise<Response> {
+  try {
+    const { front, back, langFrom, langTo, context, sourceUrl, sourceTitle } = request
+    return ok(
+      await saveCard({
+        front,
+        back,
+        langFrom,
+        langTo,
+        ...(context ? { context } : {}),
+        ...(sourceUrl ? { sourceUrl } : {}),
+        ...(sourceTitle ? { sourceTitle } : {}),
+      }),
+    )
+  } catch (error) {
+    console.warn('[memory-slot] could not save the card:', error)
+    await recordDiagnostic({ event: 'save-failed', detail: String(error) })
+    return fail('provider-failed')
+  }
+}
+
+async function handleRestoreCard(
+  request: Extract<Request, { type: 'restore-card' }>,
+): Promise<Response> {
+  try {
+    await restoreCard(request.id, (request.previous ?? null) as Card | null)
+    return ok({ restored: true })
+  } catch (error) {
+    console.warn('[memory-slot] could not undo the save:', error)
+    return fail('provider-failed')
+  }
+}
+
+async function handleDueCount(): Promise<Response> {
+  try {
+    return ok({ due: await countDue() })
+  } catch {
+    return ok({ due: 0 })
   }
 }
 

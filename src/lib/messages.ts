@@ -12,6 +12,21 @@ export type Request =
   | { type: 'content-stop' }
   /** Diagnostics: is our script alive in this tab? */
   | { type: 'ping' }
+  /** Save the current card. Storage lives in the background: see lib/store/db.ts. */
+  | {
+      type: 'add-card'
+      front: string
+      back: string
+      langFrom: string
+      langTo: string
+      context?: string
+      sourceUrl?: string
+      sourceTitle?: string
+    }
+  /** Undo a save, putting back exactly what was there before. */
+  | { type: 'restore-card'; id: string; previous: unknown }
+  /** How many cards are waiting to be reviewed. */
+  | { type: 'due-count' }
 
 export type Response<T = unknown> = { ok: true; data: T } | { ok: false; error: ErrorCode }
 

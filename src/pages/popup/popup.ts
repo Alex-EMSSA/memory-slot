@@ -6,7 +6,7 @@
  * it must be the first thing the handler does. Anything awaited before it loses the gesture.
  */
 import { setToolbarState } from '../../lib/toolbar'
-import type { Request } from '../../lib/messages'
+import { send, type Request } from '../../lib/messages'
 import { siteTarget, type SiteTarget } from '../../lib/origin'
 
 /** TODO: replace with the real donation link before the first AMO submission. */
@@ -179,8 +179,15 @@ async function stopRunningScripts(pattern: string, tabId: number): Promise<void>
   )
 }
 
+/** The count in the popup has to be the real one; a hard-coded zero is a lie with a number on it. */
+async function showDueCount(): Promise<void> {
+  const response = await send<{ due: number }>({ type: 'due-count' })
+  el('due-count').textContent = String(response.ok ? response.data.due : 0)
+}
+
 async function init(): Promise<void> {
   el('version').textContent = `v${browser.runtime.getManifest().version}`
+  void showDueCount()
 
   el<HTMLAnchorElement>('support').addEventListener('click', (event) => {
     event.preventDefault()
