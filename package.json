@@ -1,0 +1,42 @@
+{
+  "name": "memory-slot",
+  "version": "0.1.0",
+  "description": "Firefox extension: translate a word or phrase on double-click and save it as a flashcard.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch --run",
+    "watch": "node build.mjs --watch",
+    "start": "web-ext run",
+    "typecheck": "tsc --noEmit",
+    "lint:code": "eslint .",
+    "lint:ext": "npm run build && web-ext lint --source-dir dist",
+    "lint": "npm run lint:code && npm run lint:ext",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "package": "npm run build && web-ext build --source-dir dist --overwrite-dest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/firefox-webext-browser": "^120.0.4",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0",
+    "vitest": "^5.0.0",
+    "web-ext": "^10.6.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
+  }
+}

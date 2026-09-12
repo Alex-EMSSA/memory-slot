@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Memory Slot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <img class="head__icon" src="icons/icon.svg" alt="" width="20" height="20" />
+      <h1 class="head__title">Memory Slot</h1>
+    </header>
+
+    <section class="site">
+      <div class="site__text">
+        <span class="site__label">Enable on this site</span>
+        <span class="site__host" id="host">—</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="site-toggle" disabled />
+        <span class="switch__track" aria-hidden="true"></span>
+        <span class="visually-hidden">Enable on this site</span>
+      </label>
+    </section>
+
+    <p class="hint" id="hint">Per-site enabling arrives in the next step.</p>
+
+    <section class="due">
+      <span class="due__count" id="due-count">0</span>
+      <span class="due__label">cards due today</span>
+      <button class="button" id="review" type="button" disabled>Review</button>
+    </section>
+
+    <footer class="foot">
+      <a href="#" id="options">Settings</a>
+      <a href="#" id="support">Support</a>
+      <span class="foot__version" id="version"></span>
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

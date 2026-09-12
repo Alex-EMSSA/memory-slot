@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Memory Slot",
+    "description": "Extension name shown in the browser and on AMO."
+  },
+  "extDescription": {
+    "message": "Double-click a word or select a phrase to see its translation and save it as a flashcard. Off by default — you enable it per site.",
+    "description": "Extension summary shown in the browser and on AMO."
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+web-ext-artifacts/
+.web-ext-profile/
+*.log
+.DS_Store
+Thumbs.db
