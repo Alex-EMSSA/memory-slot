@@ -4,6 +4,7 @@ import { rejection } from './helpers/rejection'
 
 const GTX_HELLO = [[['привіт', 'hello', null, null, 10]], null, 'en']
 const CLOUD_HELLO = { data: { translations: [{ translatedText: 'привіт' }] } }
+const MYMEMORY_HELLO = { responseData: { translatedText: 'привіт' }, responseStatus: 200 }
 
 /** Fresh modules per test: the cache and the rate limiter both keep module-scope state. */
 async function loadTranslate(settings?: Record<string, unknown>) {
@@ -126,17 +127,68 @@ describe('translate', () => {
     expect((await pending).code).toBe('network')
   })
 
-  /** Retrying a throttle is how a throttle becomes a block. */
-  it('does not retry when Google throttles us', async () => {
+  /** Retrying a throttle is how a throttle becomes a block: one attempt each, no more. */
+  it('does not retry a provider that throttled us', async () => {
     vi.useFakeTimers()
     const { translate } = await loadTranslate()
-    const fetchMock = stubFetch(jsonResponse([], 429))
+    const fetchMock = stubFetch(jsonResponse([], 429), jsonResponse(MYMEMORY_HELLO))
+
+    const pending = translate({ text: 'hello', from: 'auto', to: 'uk' })
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toMatchObject({ text: 'привіт' })
+    // Once to Google, once to the stand-in. No second attempt at the one that refused.
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  /** The whole point of a second provider: Google refusing must not stop the reader. */
+  it('falls back to MyMemory when Google refuses', async () => {
+    vi.useFakeTimers()
+    const { translate } = await loadTranslate()
+    const fetchMock = stubFetch(jsonResponse([], 429), jsonResponse(MYMEMORY_HELLO))
+
+    const pending = translate({ text: 'hello', from: 'auto', to: 'uk' })
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toMatchObject({ text: 'привіт' })
+    expect(new URL(fetchMock.mock.calls[1]?.[0] as string).origin).toBe(
+      'https://api.mymemory.translated.net',
+    )
+  })
+
+  it('skips a provider that is still in its cooldown', async () => {
+    vi.useFakeTimers()
+    const { translate } = await loadTranslate()
+
+    const first = stubFetch(jsonResponse([], 429), jsonResponse(MYMEMORY_HELLO))
+    const pendingFirst = translate({ text: 'hello', from: 'auto', to: 'uk' })
+    await vi.runAllTimersAsync()
+    await pendingFirst
+    expect(first).toHaveBeenCalledTimes(2)
+
+    // A different word, so the cache cannot answer it. Google is still resting.
+    const second = stubFetch(jsonResponse(MYMEMORY_HELLO))
+    const pendingSecond = translate({ text: 'world', from: 'auto', to: 'uk' })
+    await vi.runAllTimersAsync()
+    await pendingSecond
+
+    expect(second).toHaveBeenCalledTimes(1)
+    expect(new URL(second.mock.calls[0]?.[0] as string).origin).toBe(
+      'https://api.mymemory.translated.net',
+    )
+  })
+
+  it('reports the shortest wait when every provider has refused', async () => {
+    vi.useFakeTimers()
+    const { translate } = await loadTranslate()
+    stubFetch(jsonResponse([], 429), jsonResponse({ responseData: {}, responseStatus: 429 }, 429))
 
     const pending = rejection(translate({ text: 'hello', from: 'auto', to: 'uk' }))
     await vi.runAllTimersAsync()
 
-    expect((await pending).code).toBe('rate-limited')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const error = await pending
+    expect(error.code).toBe('rate-limited')
+    expect(error.message).toMatch(/Try again in \d+ s/)
   })
 
   it('prefers the user key when one is set', async () => {
@@ -154,7 +206,7 @@ describe('translate', () => {
     expect(url.searchParams.get('key')).toBe('test-key')
   })
 
-  it('falls back to the free endpoint when the user key is refused', async () => {
+  it('falls back from the user key to the free endpoint', async () => {
     vi.useFakeTimers()
     const { translate } = await loadTranslate({
       targetLang: 'uk',

@@ -29,7 +29,8 @@
   ],
   "host_permissions": [
     "https://translate.googleapis.com/*",
-    "https://translation.googleapis.com/*"
+    "https://translation.googleapis.com/*",
+    "https://api.mymemory.translated.net/*"
   ],
   "optional_host_permissions": [
     "<all_urls>"

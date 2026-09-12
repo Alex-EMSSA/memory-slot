@@ -92,7 +92,11 @@ export function installBrowserStub(initial: Store = {}, origins: string[] = []):
       storage: { local },
       permissions,
       scripting,
-      i18n: { getUILanguage: () => 'en-GB' },
+      i18n: {
+        getUILanguage: () => 'en-GB',
+        detectLanguage: () =>
+          Promise.resolve({ isReliable: true, languages: [{ language: 'en', percentage: 99 }] }),
+      },
       runtime: { getManifest: () => ({ version: '0.0.0' }) },
     },
   })

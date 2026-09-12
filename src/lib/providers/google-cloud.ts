@@ -2,6 +2,7 @@
  * Official Google Cloud Translation API v2, used only when the user supplies their own key.
  * Stable and sanctioned, but billed to that key — so it is never the default.
  */
+import { decodeEntities } from './entities'
 import {
   ProviderError,
   type TranslateRequest,
@@ -10,30 +11,6 @@ import {
 } from './types'
 
 const ENDPOINT = 'https://translation.googleapis.com/language/translate/v2'
-
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-}
-
-/**
- * The API escapes entities even with format=text, so "don't" comes back as "don&#39;t".
- * Storing that verbatim would put literal &#39; on a flashcard.
- */
-export function decodeEntities(text: string): string {
-  return text.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (match, body: string) => {
-    if (body.startsWith('#')) {
-      const code = body[1]?.toLowerCase() === 'x' ? parseInt(body.slice(2), 16) : Number(body.slice(1))
-      if (!Number.isInteger(code) || code < 0 || code > 0x10ffff) return match
-      return String.fromCodePoint(code)
-    }
-    return NAMED_ENTITIES[body.toLowerCase()] ?? match
-  })
-}
 
 export function createGoogleCloud(apiKey: string): TranslationProvider {
   return {

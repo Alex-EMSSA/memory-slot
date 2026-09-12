@@ -8,6 +8,7 @@ import { cacheKey, getCached, putCached } from '../lib/cache'
 import { describeWait, recordRefusal, recordSuccess, remainingSeconds } from './cooldown'
 import { createGoogleCloud } from '../lib/providers/google-cloud'
 import { googleGtx } from '../lib/providers/google-gtx'
+import { myMemory } from '../lib/providers/mymemory'
 import {
   asProviderError,
   ProviderError,
@@ -34,11 +35,15 @@ export function normalize(text: string): string {
 }
 
 /**
- * A user key is the stable, sanctioned path, so it goes first when present. gtx stays behind
- * it as a fallback: keys get revoked, run out of quota and get typo'd.
+ * Who gets asked, in order.
+ *
+ * A user key is the stable, sanctioned path, so it goes first when there is one. Google's
+ * free endpoint gives the best quality of the rest. MyMemory sits behind it as the answer to
+ * "Google is refusing us today" — slower and more variable, but it works when Google will not.
  */
-async function providerChain(apiKey: string): Promise<TranslationProvider[]> {
-  return apiKey.trim() === '' ? [googleGtx] : [createGoogleCloud(apiKey.trim()), googleGtx]
+function providerChain(apiKey: string): TranslationProvider[] {
+  const free = [googleGtx, myMemory]
+  return apiKey.trim() === '' ? free : [createGoogleCloud(apiKey.trim()), ...free]
 }
 
 export async function translate(
@@ -62,38 +67,41 @@ export async function translate(
   const cached = await getCached(key)
   if (cached) return withLanguages(cached, from, to)
 
-  // Checked after the cache: a known word must keep working while we are in the doghouse.
-  const waiting = await remainingSeconds()
-  if (waiting > 0) {
-    throw new ProviderError(
-      'rate-limited',
-      `Google is refusing requests. Try again in ${describeWait(waiting)}.`,
-    )
-  }
-
-  const providers = await providerChain(settings.apiKey)
   let lastError = new ProviderError('provider-failed', 'no provider available')
+  /** Shortest wait among the providers we skipped, for an honest message at the end. */
+  let shortestWait = Number.POSITIVE_INFINITY
 
-  for (const provider of providers) {
+  for (const provider of providerChain(settings.apiKey)) {
+    // Checked per provider: one sulking endpoint must not silence the others.
+    const waiting = await remainingSeconds(provider.id)
+    if (waiting > 0) {
+      shortestWait = Math.min(shortestWait, waiting)
+      continue
+    }
+
     try {
       const result = await callWithRetry(provider, resolved)
       await putCached(key, result)
-      await recordSuccess()
+      await recordSuccess(provider.id)
       return withLanguages(result, from, to)
     } catch (error) {
       lastError = asProviderError(error)
+
       // A malformed request fails identically everywhere; trying the next provider is pointless.
-      if (lastError.code === 'bad-request') throw lastError
+      if (lastError.code === 'bad-request' && provider.id !== 'mymemory') throw lastError
+
+      // A refusal or a broken provider earns a rest. A dropped connection does not: that is
+      // the reader's network, and blaming every provider for it would leave them with none.
+      if (lastError.code === 'rate-limited' || lastError.code === 'provider-failed') {
+        shortestWait = Math.min(shortestWait, await recordRefusal(provider.id))
+      }
     }
   }
 
-  // Every provider refused. Stop asking for a while: each further request both fails and
-  // keeps the block alive.
-  if (lastError.code === 'rate-limited') {
-    const wait = await recordRefusal()
+  if (Number.isFinite(shortestWait)) {
     throw new ProviderError(
       'rate-limited',
-      `Google is refusing requests. Try again in ${describeWait(wait)}.`,
+      `Translation services are refusing requests. Try again in ${describeWait(shortestWait)}.`,
       lastError,
     )
   }
