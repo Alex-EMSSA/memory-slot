@@ -1,6 +1,6 @@
 {
   "name": "memory-slot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Firefox extension: translate a word or phrase on double-click and save it as a flashcard.",
   "private": true,
   "type": "module",
