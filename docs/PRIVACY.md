@@ -24,12 +24,11 @@ around the word, your saved cards and your settings are never sent.
 
 The request goes to the first service in this list that accepts it:
 
-| Service | Operated by | When it is used |
-| --- | --- | --- |
-| Google Cloud Translation API | Google | Only if you entered your own API key in the settings |
-| Google Translate (`translate.googleapis.com`) | Google | By default, first |
-| Bing Translator (`www.bing.com`) | Microsoft | If Google refuses the request |
-| MyMemory (`api.mymemory.translated.net`) | Translated S.r.l. | If Bing refuses as well |
+1. **Google Cloud Translation API** (Google), only if you entered your own API key in the
+   settings.
+2. **Google Translate**, `translate.googleapis.com` (Google), by default.
+3. **Bing Translator**, `www.bing.com` (Microsoft), if Google refuses the request.
+4. **MyMemory**, `api.mymemory.translated.net` (Translated S.r.l.), if Bing refuses as well.
 
 If you entered a Google Cloud API key, that key is sent to Google with each request so that Google
 can bill your account. It is sent in a request header, not in the address.
