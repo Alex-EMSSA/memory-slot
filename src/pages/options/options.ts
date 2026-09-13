@@ -7,6 +7,7 @@
 import { readableTextColour } from '../../lib/colour'
 import { LANGUAGES } from '../../lib/langs'
 import { hostFromPattern } from '../../lib/origin'
+import { checkGoogleKey, type KeyCheck } from '../../lib/providers/google-cloud'
 import { disableSite, enabledSites } from '../../lib/sites'
 import { getSettings, patchSettings, type Settings } from '../../lib/store/settings'
 
@@ -115,6 +116,80 @@ function renderPreview(colour: string): void {
   note.textContent = 'Your colour, with the text colour chosen to stay readable on it.'
 }
 
+const KEY_CHECK_TIMEOUT_MS = 10_000
+
+const KEY_CHECK_MESSAGES: Record<KeyCheck, { text: string; good: boolean }> = {
+  valid: { text: 'The key works. Translations now go through Google Cloud.', good: true },
+  refused: {
+    text: 'Google refused this key. Check that the Cloud Translation API is enabled and billing is set up for its project.',
+    good: false,
+  },
+  'rate-limited': {
+    text: 'Google accepted the key but is limiting it right now. Try again later.',
+    good: false,
+  },
+  network: { text: 'No connection, so the key could not be checked.', good: false },
+  failed: { text: 'Google answered unexpectedly. Try again later.', good: false },
+}
+
+function keyStatus(text: string, tone: 'good' | 'bad' | 'neutral' = 'neutral'): void {
+  const node = el('key-status')
+  node.textContent = text
+  node.classList.toggle('key__status--good', tone === 'good')
+  node.classList.toggle('key__status--bad', tone === 'bad')
+}
+
+function setUpApiKey(saved: string): void {
+  const input = el<HTMLInputElement>('api-key')
+  const show = el<HTMLButtonElement>('key-show')
+  const check = el<HTMLButtonElement>('key-check')
+
+  /** Checks whatever the box holds, so the status always describes the key actually saved. */
+  async function verify(key: string): Promise<void> {
+    if (key === '') {
+      keyStatus('No key: translations use the free services.')
+      check.disabled = true
+      return
+    }
+
+    check.disabled = true
+    keyStatus('Checking…')
+    const result = await checkGoogleKey(key, AbortSignal.timeout(KEY_CHECK_TIMEOUT_MS))
+    // The user may have edited the box while we waited; that answer is no longer theirs.
+    if (input.value.trim() !== key) return
+    const message = KEY_CHECK_MESSAGES[result]
+    keyStatus(message.text, message.good ? 'good' : 'bad')
+    check.disabled = false
+  }
+
+  input.value = saved
+
+  input.addEventListener('input', () => {
+    check.disabled = input.value.trim() === ''
+    keyStatus('')
+  })
+
+  // Pasted keys often carry a stray space or newline, which Google rejects as a different key.
+  input.addEventListener('change', () => {
+    const key = input.value.trim()
+    input.value = key
+    void save({ apiKey: key }).then(() => verify(key))
+  })
+
+  show.addEventListener('click', () => {
+    const showing = input.type === 'text'
+    input.type = showing ? 'password' : 'text'
+    show.textContent = showing ? 'Show' : 'Hide'
+    show.setAttribute('aria-pressed', String(!showing))
+  })
+
+  // For a retry after enabling the API or billing, when the key itself has not changed.
+  check.addEventListener('click', () => void verify(input.value.trim()))
+
+  // A key that stopped working since it was saved should say so the moment settings open.
+  void verify(saved)
+}
+
 async function init(): Promise<void> {
   el('version').textContent = `v${browser.runtime.getManifest().version}`
 
@@ -140,6 +215,8 @@ async function init(): Promise<void> {
     targetLang.append(custom)
     targetLang.value = settings.targetLang
   }
+
+  setUpApiKey(settings.apiKey)
 
   const newPerDay = el<HTMLInputElement>('new-per-day')
   const reviewsPerDay = el<HTMLInputElement>('reviews-per-day')

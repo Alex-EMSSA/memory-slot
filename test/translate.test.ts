@@ -236,9 +236,9 @@ describe('translate', () => {
 
     await translate({ text: 'hello' })
 
-    const url = new URL(fetchMock.mock.calls[0]?.[0] as string)
-    expect(url.origin).toBe('https://translation.googleapis.com')
-    expect(url.searchParams.get('key')).toBe('test-key')
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(new URL(url).origin).toBe('https://translation.googleapis.com')
+    expect((init.headers as Record<string, string>)['X-Goog-Api-Key']).toBe('test-key')
   })
 
   it('falls back from the user key to the free endpoint', async () => {

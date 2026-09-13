@@ -29,6 +29,33 @@
           </span>
           <select class="control" id="source-lang"></select>
         </label>
+
+        <div class="row">
+          <label class="row__label" for="api-key">
+            Google Cloud API key
+            <span class="row__note">
+              Optional. With a key, translations go through the official Cloud Translation API,
+              billed to your Google account. The key stays in this browser and is sent only to
+              Google. Leave it empty to use the free services.
+            </span>
+          </label>
+          <span class="key">
+            <input
+              class="control"
+              id="api-key"
+              type="password"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="AIza…"
+              aria-describedby="key-status"
+            />
+            <span class="key__actions">
+              <button class="button" id="key-show" type="button" aria-pressed="false">Show</button>
+              <button class="button" id="key-check" type="button">Check key</button>
+            </span>
+            <span class="key__status" id="key-status" role="status"></span>
+          </span>
+        </div>
       </section>
 
       <section class="group">

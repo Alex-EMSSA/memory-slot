@@ -4,6 +4,7 @@
  */
 import { decodeEntities } from './entities'
 import {
+  asProviderError,
   ProviderError,
   type TranslateRequest,
   type TranslateResult,
@@ -26,10 +27,11 @@ export function createGoogleCloud(apiKey: string): TranslationProvider {
 
       let response: Response
       try {
-        response = await fetch(`${ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+        // In a header rather than the query string, so the key never lands in a URL log.
+        response = await fetch(ENDPOINT, {
           method: 'POST',
           credentials: 'omit',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey },
           body: JSON.stringify(body),
           ...(signal ? { signal } : {}),
         })
@@ -57,6 +59,30 @@ export function createGoogleCloud(apiKey: string): TranslationProvider {
 
       return parseCloudResponse(raw)
     },
+  }
+}
+
+export type KeyCheck = 'valid' | 'refused' | 'rate-limited' | 'network' | 'failed'
+
+/**
+ * Translates one word with the key, so the options page can tell the user whether it works.
+ * Without this a bad key fails silently: the chain just falls through to the free providers.
+ */
+export async function checkGoogleKey(apiKey: string, signal?: AbortSignal): Promise<KeyCheck> {
+  try {
+    await createGoogleCloud(apiKey).translate({ text: 'hello', from: 'en', to: 'fr' }, signal)
+    return 'valid'
+  } catch (error) {
+    switch (asProviderError(error).code) {
+      case 'permission-denied':
+        return 'refused'
+      case 'rate-limited':
+        return 'rate-limited'
+      case 'network':
+        return 'network'
+      default:
+        return 'failed'
+    }
   }
 }
 
