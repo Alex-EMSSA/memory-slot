@@ -35,6 +35,7 @@ Other scripts:
 | `npm run test:live` | hits Google for real; run it when you suspect the endpoint changed |
 | `npm run package` | zip for AMO in `web-ext-artifacts/` |
 | `npm run source` | source archive for AMO review, from the committed tree |
+| `npm run screenshots` | AMO screenshots in `docs/screenshots/`, taken in a real headless Firefox |
 | `npm run sign` | signed .xpi for everyday use, see below |
 
 `src/` is never loaded directly — Firefox always runs the build in `dist/`.

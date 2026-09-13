@@ -73,6 +73,20 @@ The text you select, and the languages, are sent to the translation service — 
 Memory Slot is free and open source (MIT): https://github.com/Alex-EMSSA/memory-slot
 ```
 
+## Screenshots
+
+In `docs/screenshots/`, 1280×800, regenerated with `npm run screenshots`. Upload in this order;
+the captions go in each screenshot's description field.
+
+| File | Caption |
+| --- | --- |
+| `1-translate.png` | Double-click a word: the translation appears above it, the card opens top right. |
+| `2-enable.png` | Off everywhere until you switch it on for a site from the toolbar button. |
+| `3-review.png` | Spaced repetition, one key per answer. |
+| `4-cards.png` | Every card with its sentence and source. Search, edit, export for Anki. |
+| `5-settings.png` | One short settings page, including the list of enabled sites. |
+| `6-welcome.png` | The first-run page says plainly what leaves your computer. |
+
 ## Categories
 
 - Language Support
