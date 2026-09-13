@@ -12,7 +12,7 @@ import { disableSite, enabledSites } from '../../lib/sites'
 import { getSettings, patchSettings, type Settings } from '../../lib/store/settings'
 
 /** TODO: replace with the real donation link before the first AMO submission. */
-const SUPPORT_URL = 'https://ko-fi.com/'
+const SUPPORT_URL = 'https://ko-fi.com/alexems'
 
 /** Offered when the user turns the colour on without having picked one before. */
 const DEFAULT_COLOUR = '#4f46e5'

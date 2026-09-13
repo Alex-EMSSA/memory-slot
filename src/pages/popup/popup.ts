@@ -12,7 +12,7 @@ import { disableSite } from '../../lib/sites'
 import { todayStats } from '../../lib/store/stats'
 
 /** TODO: replace with the real donation link before the first AMO submission. */
-const SUPPORT_URL = 'https://ko-fi.com/'
+const SUPPORT_URL = 'https://ko-fi.com/alexems'
 
 const CONTENT_SCRIPT_FILE = 'content.js'
 

@@ -101,7 +101,7 @@ Paste the body of [PRIVACY.md](PRIVACY.md).
 
 ## Contributions
 
-`https://ko-fi.com/…` — the same address as `SUPPORT_URL` in `src/pages/popup/popup.ts` and
+`https://ko-fi.com/alexems` — the same address as `SUPPORT_URL` in `src/pages/popup/popup.ts` and
 `src/pages/options/options.ts`.
 
 ---
