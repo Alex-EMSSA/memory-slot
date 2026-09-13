@@ -2,13 +2,15 @@
 
 All notable changes to Memory Slot. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] — unreleased
+## [1.0.0] — 2026-09-13
 
 First public release on addons.mozilla.org.
 
 ### Added
 
 - Privacy policy (`docs/PRIVACY.md`) and listing texts for AMO (`docs/AMO.md`).
+- Support link to Ko-fi in the toolbar popup and the settings.
+- `npm run screenshots` takes the listing screenshots in a real Firefox.
 
 ## [0.1.1] — 2026-09-13
 
