@@ -23,52 +23,50 @@ Double-click a word or select a phrase to see its translation and save it as a f
 
 ## Description
 
-```
+_Markdown (the form says "Some Markdown supported"); HTML tags would show as text._
+
+```markdown
 Learn words while you read, without leaving the page.
 
 Double-click a word, or select a phrase with the mouse. The translation appears right above the text, and a card with the word, its translation and the sentence it came from opens in a small floating window. One click on Add to deck saves it, and spaced repetition brings it back just before you would forget it.
 
-<b>Off until you turn it on</b>
+**Off until you turn it on**
 Memory Slot does nothing on any website until you enable it there from the toolbar button. On sites you have not enabled, it cannot read the page at all. Enable it on the news site, forum or documentation you read in another language, and leave everything else alone.
 
-<b>How it works</b>
-<ul>
-<li>Double-click a word or select a phrase — no extra buttons, no shortcuts to remember.</li>
-<li>The translation shows above the text and disappears on its own when you move on.</li>
-<li>The card window can be dragged anywhere, minimised or closed, and stays where you put it on every page.</li>
-<li>Pronunciation using your system's voices.</li>
-</ul>
+**How it works**
 
-<b>Review</b>
-<ul>
-<li>Spaced repetition (SM-2): new words come back soon, known words at growing intervals.</li>
-<li>Fully keyboard-driven: Space shows the answer, 1–4 grades it.</li>
-<li>Daily limits for new words and reviews, so a busy week does not turn into a wall of cards.</li>
-</ul>
+- Double-click a word or select a phrase — no extra buttons, no shortcuts to remember.
+- The translation shows above the text and disappears on its own when you move on.
+- The card window can be dragged anywhere, minimised or closed, and stays where you put it on every page.
+- Pronunciation using your system's voices.
 
-<b>Your cards are yours</b>
-<ul>
-<li>Stored only in your browser. No account, no server, no analytics.</li>
-<li>Search, edit and delete cards in the card manager.</li>
-<li>Export a full backup as JSON, including the review schedule, and import it back.</li>
-<li>Export for Anki as a CSV file.</li>
-</ul>
+**Review**
 
-<b>Translation</b>
+- Spaced repetition (SM-2): new words come back soon, known words at growing intervals.
+- Fully keyboard-driven: Space shows the answer, 1–4 grades it.
+- Daily limits for new words and reviews, so a busy week does not turn into a wall of cards.
+
+**Your cards are yours**
+
+- Stored only in your browser. No account, no server, no analytics.
+- Search, edit and delete cards in the card manager.
+- Export a full backup as JSON, including the review schedule, and import it back.
+- Export for Anki as a CSV file.
+
+**Translation**
 Works out of the box, no API key needed. Memory Slot asks Google Translate first and falls back to Microsoft Bing and then MyMemory when a service is busy. If you have a Google Cloud Translation API key, you can add it in the settings to use it first.
 
-<b>Privacy</b>
+**Privacy**
 The text you select, and the languages, are sent to the translation service — nothing else: not the page address, not the surrounding text, not your cards. Requests carry no cookies. See the privacy policy for the full list.
 
-<b>Known limitations</b>
-<ul>
-<li>Enabled per site, on purpose.</li>
-<li>No sync between devices. Cards live in your Firefox profile; export them for a backup.</li>
-<li>Does not work where there is no ordinary text selection: the built-in PDF viewer, Google Docs, Figma and similar editors.</li>
-<li>Does not trigger inside text fields, so it never gets in the way of typing.</li>
-<li>Needs an internet connection; translation quality is that of the service used.</li>
-<li>Interface in English only.</li>
-</ul>
+**Known limitations**
+
+- Enabled per site, on purpose.
+- No sync between devices. Cards live in your Firefox profile; export them for a backup.
+- Does not work where there is no ordinary text selection: the built-in PDF viewer, Google Docs, Figma and similar editors.
+- Does not trigger inside text fields, so it never gets in the way of typing.
+- Needs an internet connection; translation quality is that of the service used.
+- Interface in English only.
 
 Memory Slot is free and open source (MIT): https://github.com/Alex-EMSSA/memory-slot
 ```
