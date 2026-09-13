@@ -2,9 +2,14 @@
 
 All notable changes to Memory Slot. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] — 2026-09-13
+
+First public release on addons.mozilla.org. Same code as 1.0.0, which was signed in the unlisted
+channel by mistake; AMO never reuses a version number.
+
 ## [1.0.0] — 2026-09-13
 
-First public release on addons.mozilla.org.
+Signed unlisted, not published.
 
 ### Added
 
