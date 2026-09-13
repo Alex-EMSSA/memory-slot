@@ -81,7 +81,7 @@ build: it runs esbuild over the entry points listed there and copies the static 
 **Optional checks**
 
 ```bash
-npm test        # 242 unit tests, offline
+npm test        # 249 unit tests, offline
 npm run lint    # ESLint plus web-ext lint on the built extension
 ```
 
