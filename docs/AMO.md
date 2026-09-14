@@ -71,6 +71,11 @@ The text you select, and the languages, are sent to the translation service — 
 Memory Slot is free and open source (MIT): https://github.com/Alex-EMSSA/memory-slot
 ```
 
+## Add-on icon
+
+`docs/amo-icon-128.png`, 128×128 PNG with a transparent background: the toolbar icon
+`src/icons/icon.svg` rasterised, since the form does not take SVG.
+
 ## Screenshots
 
 In `docs/screenshots/`, 1280×800, regenerated with `npm run screenshots`. Upload in this order;
