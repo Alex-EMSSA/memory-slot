@@ -8,7 +8,7 @@ minimise or close. One click saves it to a deck and spaced repetition takes it f
 scripts at all — the content script is registered at runtime, only for the origins you allow — so
 on a site you have not enabled, nothing of ours runs and nothing is read or sent.
 
-Status: **1.0**, published on addons.mozilla.org. See [docs/PLAN.md](docs/PLAN.md) for the roadmap (in Russian).
+Status: **1.0.1**, published on [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/memory-slot/). See [docs/PLAN.md](docs/PLAN.md) for the roadmap (in Russian).
 
 ## Requirements
 
